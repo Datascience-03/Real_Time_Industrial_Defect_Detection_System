@@ -1,0 +1,12 @@
+path: ../dataset  # dataset root dir
+train: train/images
+val: valid/images
+test: test/images
+
+names:
+  0: Crazing
+  1: Inclusion
+  2: Patches
+  3: Pitted Surface
+  4: Rolled-in Scale
+  5: Scratches
