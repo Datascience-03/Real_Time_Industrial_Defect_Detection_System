@@ -23,6 +23,13 @@
 - Rolled In Scale
 - Scratches
 
-### Status
+### member manjesh progress
 
 Dataset preparation completed successfully and is ready for preprocessing and model training.
+# Week 1 - Preprocessing Pipeline Integrated
+
+### Accomplishments:
+- **Preprocessing Pipeline (Member 4):** Completed `preprocess.py`.
+- **Functionality:** Implemented automated resizing (640x640) and normalization (0-1).
+- **Integration:** Successfully linked the `raw` dataset folders to the `augmented` destination. The pipeline now automatically processes 350+ images across all defect categories (crazing, scratches, etc.).
+- **Status:** Integrated, verified, and ready for training.
