@@ -1,7 +1,21 @@
+<<<<<<< HEAD
 path: ../dataset
+=======
+>>>>>>> e4e592cffce95ef47616b10d47b1e48c404ef4a6
 train: train
 val: valid
 test: test
 
 nc: 6
+<<<<<<< HEAD
 names: ['crazing', 'inclusion', 'patches', 'pitted_surface', 'rolled_in_scale', 'scratches']
+=======
+
+names:
+  - crazing
+  - inclusion
+  - patches
+  - pitted_surface
+  - rolled_in_scale
+  - scratches
+>>>>>>> e4e592cffce95ef47616b10d47b1e48c404ef4a6
