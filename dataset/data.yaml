@@ -1,0 +1,13 @@
+train: train
+val: valid
+test: test
+
+nc: 6
+
+names:
+  - crazing
+  - inclusion
+  - patches
+  - pitted_surface
+  - rolled_in_scale
+  - scratchess
