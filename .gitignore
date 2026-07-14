@@ -1,0 +1,27 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual Environment
+venv/
+
+# VS Code
+.vscode/
+
+# Operating System files
+.DS_Store
+Thumbs.db
+
+# Generated augmented images
+outputs/augmented_images/
+
+# Generated reports
+outputs/reports/
+
+# Temporary files
+*.log
+*.tmp
+
+outputs/sample_results/
