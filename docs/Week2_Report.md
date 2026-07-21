@@ -1,19 +1,32 @@
 # Week 2 Report
 
-## visalam - Dataset Validation & Training Support
+## Project Title
+Real-Time Industrial Defect Detection System
+member 1
+## Week 2 Objectives
+- Prepared the dataset for YOLOv8 training.
+- Organized images and labels into train, validation, and test folders.
+- Configured the `data.yaml` file with six defect classes.
+- Installed and verified the Ultralytics YOLOv8 framework.
+- Trained the YOLOv8n object detection model for 20 epochs.
+- Evaluated the model using validation metrics.
 
-### Tasks Completed
-- Verified dataset structure (train, valid, test).
-- Checked image and label folders.
-- Verified data.yaml configuration.
-- Confirmed all six classes are correctly defined.
-- Checked for missing labels and dataset issues.
-- Verified that no corrupted images were found.
-- Supported YOLOv8 training by resolving dataset-related issues.
-- Confirmed training completed successfully (50 epochs).
-- Verified best.pt model was generated successfully.
+## Work Completed
+- Verified dataset structure and annotations.
+- Configured training parameters (640 image size, batch size 16, 20 epochs).
+- Successfully trained the model using YOLOv8n.
+- Generated training outputs including:
+  - Best and last model weights (`best.pt`, `last.pt`)
+  - Training graphs
+  - Confusion matrix
+  - Labels visualization
+  - Training logs (`results.csv`)
+- Achieved excellent detection performance with approximately **99.5% mAP@50**.
 
-### Deliverables
-- Verified dataset.
-- Updated and validated data.yaml.
-- Training support completed.s
+## Challenges Faced
+- Corrected the dataset folder structure.
+- Fixed `data.yaml` configuration issues.
+- Resolved training output directory organization.
+
+## Outcome
+The YOLOv8 model was successfully trained and validated. The generated model weights (`best.pt`) will be used in the next phase for real-time defect detection and performance testing.
