@@ -1,0 +1,4 @@
+Experiment,Epochs,Batch,Image Size,Learning Rate
+baseline,20,8,640,0.01
+batch16,20,16,640,0.01
+lr005,20,8,640,0.005
