@@ -16,12 +16,19 @@ PROJECT_DIR = ROOT / "runs" / "detect"
 # ===========================
 # Training Hyperparameters
 # ===========================
-EPOCHS = 20
-BATCH_SIZE = 8
-IMAGE_SIZE = 640
-LEARNING_RATE = 0.01
-EXPERIMENT_NAME = "baseline_tuning"
+# ===========================
+# Hyperparameter Experiments
+# ===========================
 
+EXPERIMENTS = [
+    {
+        "name": "baseline_tuning",
+        "epochs": 20,
+        "batch": 8,
+        "imgsz": 640,
+        "lr0": 0.01
+    }
+]
 
 def load_model():
     """
@@ -30,28 +37,35 @@ def load_model():
     return YOLO(str(MODEL_PATH))
 
 
-def train_model(model):
+def train_model(model, data_path, experiment):
     """
-    Train the YOLO model using configurable hyperparameters.
+    Train YOLO using a specified hyperparameter configuration.
     """
 
     results = model.train(
-        data=str(DATA_PATH),
-        epochs=EPOCHS,
-        imgsz=IMAGE_SIZE,
-        batch=BATCH_SIZE,
-        lr0=LEARNING_RATE,
+        data=str(data_path),
+        epochs=experiment["epochs"],
+        imgsz=experiment["imgsz"],
+        batch=experiment["batch"],
+        lr0=experiment["lr0"],
         project=str(PROJECT_DIR),
-        name=EXPERIMENT_NAME,
-        exist_ok=True,
+        name=experiment["name"],
+        exist_ok=True
     )
 
     return results
 
-
 def main():
     model = load_model()
-    train_model(model)
+
+    for experiment in EXPERIMENTS:
+        print(f"\nRunning Experiment: {experiment['name']}")
+
+        train_model(
+            model=model,
+            data_path=DATA_PATH,
+            experiment=experiment
+        )
 
 
 if __name__ == "__main__":
