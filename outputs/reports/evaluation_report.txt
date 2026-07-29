@@ -1,0 +1,8 @@
+Evaluation Metric Framework Verification Report
+==================================================
+mAP@0.5 Score: 0.3889
+
+Class-wise AP:
+  - crazing: 0.5000 (GTs: 2, Preds: 2)
+  - patches: 0.0000 (GTs: 1, Preds: 0)
+  - scratches: 0.6667 (GTs: 3, Preds: 4)
