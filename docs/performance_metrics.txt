@@ -1,0 +1,20 @@
+==================================================
+     DEFECT DETECTION MODEL PERFORMANCE REPORT     
+==================================================
+PyTorch (CPU):
+  Avg Latency: 69.32 ms
+  Throughput:  14.43 FPS
+
+ONNX Runtime (CPU):
+  Avg Latency: 61.73 ms
+  Throughput:  16.20 FPS
+
+TensorRT (NVIDIA RTX 3050 GPU):
+  Avg Latency: 6.84 ms
+  Throughput:  146.15 FPS
+
+Speedup Analysis:
+  ONNX (CPU) vs PyTorch (CPU): 1.12x faster
+  TensorRT (GPU) vs PyTorch (CPU): 10.13x faster
+  TensorRT (GPU) vs ONNX (CPU): 9.02x faster
+==================================================
