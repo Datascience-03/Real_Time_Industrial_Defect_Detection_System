@@ -4,6 +4,6 @@
 ==================================================
  Model Engine:   model.engine
  GPU Device:     NVIDIA GeForce RTX 3050
- Avg Latency:    6.84 ms per frame
- Throughput:     146.15 FPS
+ Avg Latency:    10.42 ms per frame
+ Throughput:     95.99 FPS
 ==================================================
