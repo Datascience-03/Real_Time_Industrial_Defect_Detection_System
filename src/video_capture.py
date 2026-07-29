@@ -23,8 +23,8 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 FRAME_WIDTH = 640
 FRAME_HEIGHT = 640
 
-SAVE_FRAMES = False      # Change to True if you want to save frames
-DISPLAY_WINDOW = True
+SAVE_FRAMES = False
+DISPLAY_WINDOW = False     # Set to True only if OpenCV GUI support is available
 
 
 def open_video_source(video_path):
@@ -80,13 +80,15 @@ def main():
         if DISPLAY_WINDOW:
             cv2.imshow("Industrial Video Capture", frame)
 
+            if cv2.waitKey(1) & 0xFF == ord("q"):
+                break
+
         frame_count += 1
 
-        if cv2.waitKey(1) & 0xFF == ord("q"):
-            break
-
     cap.release()
-    cv2.destroyAllWindows()
+
+    if DISPLAY_WINDOW:
+        cv2.destroyAllWindows()
 
     print(f"Processed Frames : {frame_count}")
 
