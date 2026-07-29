@@ -1,0 +1,9 @@
+
+==================================================
+           TENSORRT BENCHMARK RESULTS           
+==================================================
+ Model Engine:   model.engine
+ GPU Device:     NVIDIA GeForce RTX 3050
+ Avg Latency:    6.84 ms per frame
+ Throughput:     146.15 FPS
+==================================================
