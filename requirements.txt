@@ -1,5 +1,8 @@
+fastapi
+uvicorn
 albumentations
 opencv-python
 numpy
 matplotlib
 pillow
+python-multipart
