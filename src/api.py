@@ -1,73 +1,58 @@
 from fastapi import FastAPI, UploadFile, File
 from PIL import Image
+from ultralytics import YOLO
 import numpy as np
-import io
 
 app = FastAPI(
     title="Industrial Defect Detection API",
-    description="Week 4 FastAPI Backend",
-    version="1.0.0"
+    version="1.0"
 )
 
-# =====================================================
-# HOME
-# =====================================================
+# Load trained model once
+MODEL_PATH = "runs/detect/train/weights/best.pt"
+model = YOLO(MODEL_PATH)
+
+
 @app.get("/")
 def home():
     return {
-        "message": "Industrial Defect Detection API is running."
+        "message": "Industrial Defect Detection API is running!"
     }
 
 
-# =====================================================
-# HEALTH CHECK
-# =====================================================
 @app.get("/health")
 def health():
     return {
-        "status": "healthy",
-        "service": "Industrial Defect Detection",
-        "version": "1.0.0"
+        "status": "healthy"
     }
 
 
-# =====================================================
-# IMAGE PREPROCESSING
-# =====================================================
-def preprocess_image(image: Image.Image):
-    """
-    Resize image and normalize pixel values.
-    """
-
-    image = image.resize((640, 640))
-    image_array = np.array(image).astype(np.float32) / 255.0
-
-    return image_array
-
-
-# =====================================================
-# PREDICTION ENDPOINT
-# =====================================================
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
-    """
-    Upload an image and perform preprocessing.
-    Actual YOLO inference will be integrated later.
-    """
+    image = Image.open(file.file).convert("RGB")
 
-    contents = await file.read()
+    results = model(image)
 
-    image = Image.open(io.BytesIO(contents)).convert("RGB")
+    boxes = results[0].boxes
 
-    processed_image = preprocess_image(image)
+    if len(boxes) == 0:
+        return {
+            "filename": file.filename,
+            "message": "No defect detected",
+            "detections": 0
+        }
 
-    height, width = processed_image.shape[:2]
+    best_box = boxes[0]
+
+    class_id = int(best_box.cls.item())
+    confidence = float(best_box.conf.item())
+
+    class_name = model.names[class_id]
 
     return {
         "filename": file.filename,
-        "width": width,
-        "height": height,
-        "message": "Image received and preprocessed successfully.",
-        "predicted_class": "No Defect",
-        "confidence": 0.98
+        "predicted_class": class_name,
+        "confidence": round(confidence, 4),
+        "detections": len(boxes),
+        "message": "Inference completed successfully"
     }
