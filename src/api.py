@@ -6,34 +6,110 @@ import time
 
 app = FastAPI(
     title="Industrial Defect Detection API",
-    description="API for detecting industrial surface defects using YOLOv8",
-    version="1.0"
+    description="""
+REST API for Industrial Surface Defect Detection using YOLOv8.
+
+Features
+--------
+• Image Upload
+• Defect Prediction
+• Health Monitoring
+• Version Information
+• Swagger Documentation
+""",
+    version="1.1.0",
+    contact={
+        "name": "Team Datascience-03"
+    }
 )
 
-# Load trained YOLO model
+# ----------------------------------------------------
+# Load YOLO Model
+# ----------------------------------------------------
+
 MODEL_PATH = "runs/detect/train/weights/best.pt"
-model = YOLO(MODEL_PATH)
+
+try:
+    model = YOLO(MODEL_PATH)
+    model_loaded = True
+except Exception:
+    model_loaded = False
 
 
-@app.get("/")
+# ----------------------------------------------------
+# Home
+# ----------------------------------------------------
+
+@app.get(
+    "/",
+    tags=["General"],
+    summary="Home",
+    description="Returns welcome message."
+)
 def home():
+
     return {
         "message": "Industrial Defect Detection API is Running!"
     }
 
 
-@app.get("/health")
+# ----------------------------------------------------
+# Health Check
+# ----------------------------------------------------
+
+@app.get(
+    "/health",
+    tags=["General"],
+    summary="Check API Health",
+    description="Returns current API status and confirms whether the YOLO model is loaded."
+)
 def health():
+
     return {
         "status": "healthy",
-        "model_loaded": True
+        "model_loaded": model_loaded
     }
 
 
-@app.post("/predict")
+# ----------------------------------------------------
+# Version
+# ----------------------------------------------------
+
+@app.get(
+    "/version",
+    tags=["General"],
+    summary="API Version",
+    description="Returns API version information."
+)
+def version():
+
+    return {
+        "application": "Industrial Defect Detection API",
+        "version": "1.1.0",
+        "framework": "FastAPI",
+        "model": "YOLOv8",
+        "status": "Stable"
+    }
+
+
+# ----------------------------------------------------
+# Prediction
+# ----------------------------------------------------
+
+@app.post(
+    "/predict",
+    tags=["Prediction"],
+    summary="Predict Industrial Defect",
+    description="Uploads an image and predicts the defect using the trained YOLOv8 model."
+)
 async def predict(file: UploadFile = File(...)):
 
-    # Validate uploaded image
+    if not model_loaded:
+        raise HTTPException(
+            status_code=500,
+            detail="YOLO model not loaded."
+        )
+
     try:
         image = Image.open(file.file).convert("RGB")
     except Exception:
@@ -44,7 +120,6 @@ async def predict(file: UploadFile = File(...)):
 
     width, height = image.size
 
-    # Start inference timer
     start = time.time()
 
     results = model(image)
@@ -55,8 +130,8 @@ async def predict(file: UploadFile = File(...)):
 
     boxes = results[0].boxes
 
-    # No detections
     if len(boxes) == 0:
+
         return {
             "filename": file.filename,
             "model": "YOLOv8",
@@ -68,23 +143,34 @@ async def predict(file: UploadFile = File(...)):
             "message": "No defect detected"
         }
 
-    # Highest confidence prediction
     best_box = boxes[0]
 
     class_id = int(best_box.cls.item())
+
     confidence = float(best_box.conf.item())
 
     class_name = model.names[class_id]
 
     return {
+
         "filename": file.filename,
+
         "model": "YOLOv8",
+
         "predicted_class": class_name,
+
         "confidence": round(confidence, 4),
+
         "detections": len(boxes),
+
         "width": width,
+
         "height": height,
+
         "inference_time_ms": inference_time,
+
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+
         "message": "Prediction completed successfully"
+
     }
