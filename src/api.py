@@ -1,3 +1,12 @@
+# Load the trained YOLO model during API startup.
+
+# Health endpoint to verify API availability.
+
+# Read uploaded image using Pillow.
+
+# Perform YOLO inference on uploaded image.
+
+# Return prediction along with metadata.
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from ultralytics import YOLO
 from PIL import Image
