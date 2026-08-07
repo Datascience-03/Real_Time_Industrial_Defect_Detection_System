@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: yolo_project
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+    tty: true
+    stdin_open: true
