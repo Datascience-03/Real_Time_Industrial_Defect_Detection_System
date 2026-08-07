@@ -1,17 +1,43 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
+from pydantic import BaseModel
 from ultralytics import YOLO
 from pathlib import Path
 import numpy as np
 import cv2
 import time
+import logging
 
+from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+from fastapi.responses import Response
 
+from .metrics import (
+    record_request,
+    record_inference_fps,
+    update_uptime
+)
+# ==================================================
+# Application Logging
+# ==================================================
+
+LOG_DIR = Path("logs")
+LOG_DIR.mkdir(exist_ok=True)
+
+LOG_FILE = LOG_DIR / "app.log"
+
+logging.basicConfig(
+    filename=LOG_FILE,
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
+logger = logging.getLogger(__name__)
+
+logger.info("Application logging initialized.")
 # ==================================================
 # Project Root
 # ==================================================
 
 ROOT = Path(__file__).resolve().parent.parent
-
 
 # ==================================================
 # Model Path
@@ -25,7 +51,6 @@ MODEL_PATH = (
     / "weights"
     / "best.onnx"
 )
-
 
 # ==================================================
 # Load YOLO ONNX Model
@@ -48,7 +73,6 @@ model = YOLO(
 print("YOLO ONNX model loaded successfully.")
 print("Model classes:", model.names)
 
-
 # ==================================================
 # FastAPI Application
 # ==================================================
@@ -59,6 +83,46 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# ==================================================
+# Prometheus Request Monitoring Middleware
+# ==================================================
+
+@app.middleware("http")
+async def metrics_middleware(request, call_next):
+
+    start_time = time.time()
+
+    response = await call_next(request)
+
+    latency = time.time() - start_time
+
+    record_request(
+        method=request.method,
+        endpoint=request.url.path,
+        latency=latency
+    )
+
+    logger.info(
+        f"Request: {request.method} {request.url.path} | "
+        f"Status: {response.status_code} | "
+        f"Latency: {latency:.4f}s"
+    )
+
+    return response
+# ==================================================
+# Prometheus Metrics Endpoint
+# ==================================================
+
+@app.get("/metrics")
+def metrics():
+
+    update_uptime()
+
+    return Response(
+        content=generate_latest(),
+        media_type=CONTENT_TYPE_LATEST
+    )
+
 
 # ==================================================
 # Health Check Endpoint
@@ -66,6 +130,7 @@ app = FastAPI(
 
 @app.get("/health")
 def health_check():
+
     return {
         "status": "healthy",
         "model": "loaded",
@@ -97,7 +162,6 @@ async def predict(file: UploadFile = File(...)):
             detail="Please upload a JPG, JPEG, or PNG image."
         )
 
-
     # --------------------------------------------------
     # Read uploaded file
     # --------------------------------------------------
@@ -109,7 +173,6 @@ async def predict(file: UploadFile = File(...)):
             status_code=400,
             detail="Uploaded file is empty."
         )
-
 
     # --------------------------------------------------
     # Convert bytes to OpenCV image
@@ -131,7 +194,6 @@ async def predict(file: UploadFile = File(...)):
             detail="Unable to decode the uploaded image."
         )
 
-
     # --------------------------------------------------
     # Run YOLO prediction
     # --------------------------------------------------
@@ -146,7 +208,22 @@ async def predict(file: UploadFile = File(...)):
     )
 
     inference_time = time.time() - start_time
+    logger.info(
+    f"Prediction completed: {file.filename} | "
+    f"Inference time: {inference_time:.4f}s"
+)
 
+    # --------------------------------------------------
+    # Calculate inference FPS
+    # --------------------------------------------------
+
+    inference_fps = (
+        1.0 / inference_time
+        if inference_time > 0
+        else 0
+    )
+
+    record_inference_fps(inference_fps)
 
     # --------------------------------------------------
     # Extract predictions
@@ -193,7 +270,6 @@ async def predict(file: UploadFile = File(...)):
                 ]
             })
 
-
     # --------------------------------------------------
     # Return API response
     # --------------------------------------------------
@@ -208,3 +284,29 @@ async def predict(file: UploadFile = File(...)):
         )
     }
 
+
+# ==================================================
+# PLC / External Communication
+# ==================================================
+
+class PLCDefectPayload(BaseModel):
+
+    x: float
+    y: float
+    defect: str
+    confidence: float
+
+
+@app.post("/plc/send")
+def receive_plc_data(payload: PLCDefectPayload):
+
+    return {
+        "status": "success",
+        "message": "Defect data received successfully",
+        "plc_data": {
+            "x": payload.x,
+            "y": payload.y,
+            "defect": payload.defect,
+            "confidence": payload.confidence
+        }
+    }
