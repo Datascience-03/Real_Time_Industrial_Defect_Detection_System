@@ -1,56 +1,25 @@
 ==================================================
       WEEK 4 API PERFORMANCE BENCHMARK REPORT      
 ==================================================
-Member        : 5 - Krishnakumar J
-Timestamp     : 2026-08-07 21:12:42
-Project       : Real-Time Industrial Defect Detection System
-API Framework : FastAPI + YOLO ONNX (CPUExecutionProvider)
-Total requests per test run : 100
-Concurrency levels tested   : 1, 5, 10
-Target API base URL         : http://127.0.0.1:8000
+Timestamp: 2026-08-13 14:41:27
+Total requests per test run: 100
+Target API base URL: http://127.0.0.1:8000
 ==================================================
 
 --- Endpoint: GET /health ---
-Concurrency 1  | Success: 100.0% | RPS:  494.66 | Latency: Avg= 1.92ms, P50= 1.00ms, P90= 3.00ms, P99= 6.02ms
-Concurrency 5  | Success: 100.0% | RPS: 1118.84 | Latency: Avg= 4.34ms, P50= 4.00ms, P90= 7.00ms, P99=12.02ms
-Concurrency 10 | Success: 100.0% | RPS: 1475.25 | Latency: Avg= 6.53ms, P50= 6.00ms, P90=11.00ms, P99=21.05ms
+Concurrency 1  | Success: 100.0% | RPS: 69.14 | Latency: Avg=14.19ms, P50=15.79ms, P90=24.87ms, P99=33.90ms
+Concurrency 5  | Success: 100.0% | RPS: 416.14 | Latency: Avg=10.37ms, P50=9.02ms, P90=15.65ms, P99=30.76ms
+Concurrency 10 | Success: 100.0% | RPS: 227.95 | Latency: Avg=41.71ms, P50=14.53ms, P90=58.89ms, P99=279.26ms
 
 --- Endpoint: POST /plc/send ---
-Concurrency 1  | Success: 100.0% | RPS:  433.00 | Latency: Avg= 2.21ms, P50= 2.00ms, P90= 3.00ms, P99= 6.02ms
-Concurrency 5  | Success: 100.0% | RPS:  955.77 | Latency: Avg= 5.08ms, P50= 5.00ms, P90= 8.00ms, P99=13.00ms
-Concurrency 10 | Success: 100.0% | RPS: 1152.01 | Latency: Avg= 8.40ms, P50= 8.00ms, P90=14.00ms, P99=28.02ms
+Concurrency 1  | Success: 100.0% | RPS: 49.76 | Latency: Avg=19.90ms, P50=18.01ms, P90=32.55ms, P99=40.34ms
+Concurrency 5  | Success: 100.0% | RPS: 352.15 | Latency: Avg=12.67ms, P50=9.81ms, P90=26.18ms, P99=32.45ms
+Concurrency 10 | Success: 100.0% | RPS: 298.27 | Latency: Avg=31.23ms, P50=24.85ms, P90=54.66ms, P99=85.87ms
 
 --- Endpoint: POST /predict (YOLO ONNX Inference) ---
-Concurrency 1  | Success: 100.0% | RPS:   14.86 | Latency: Avg= 67.11ms, P50= 66.52ms, P90= 71.21ms, P99= 76.84ms
-Concurrency 5  | Success: 100.0% | RPS:   15.65 | Latency: Avg=312.39ms, P50=311.95ms, P90=340.59ms, P99=349.91ms
-Concurrency 10 | Success: 100.0% | RPS:   15.54 | Latency: Avg=625.59ms, P50=626.85ms, P90=678.93ms, P99=702.44ms
-
-==================================================
-                ANALYSIS SUMMARY                   
-==================================================
-
-GET /health
-  - The health endpoint handles up to 1,475 RPS at concurrency=10.
-  - All requests returned HTTP 200. P99 latency remained below 22ms.
-
-POST /plc/send
-  - REST PLC communication handles up to 1,152 RPS at concurrency=10.
-  - JSON payload validation and response serialization add ~0.3ms overhead vs /health.
-  - P99 latency at concurrency=10 was 28ms, acceptable for factory-floor signaling.
-
-POST /predict (YOLO ONNX Inference)
-  - Single-thread throughput: ~14.86 RPS with avg latency of 67.11ms per image.
-  - ONNX inference is CPU-bound (CPUExecutionProvider); throughput plateaus at ~15 RPS
-    regardless of concurrency since the GIL serialises prediction calls.
-  - For industrial real-time targets of 30+ FPS, TensorRT GPU acceleration is recommended
-    (as verified in Week 3: 146.15 FPS on NVIDIA RTX 3050).
-  - P99 latency at concurrency=1: 76.84ms — well within acceptable range for single-stream
-    inspection lines running at standard 15 FPS camera framerates.
-
-RECOMMENDATIONS:
-  1. Deploy with TensorRT engine for production-grade throughput (10x speedup verified).
-  2. Scale /health and /plc/send horizontally; they are stateless and highly concurrent.
-  3. Set uvicorn workers > 1 for multi-stream /predict to utilize multi-core CPU headroom.
+Concurrency 1  | Success: 100.0% | RPS: 14.86 | Latency: Avg=67.06ms, P50=66.72ms, P90=81.46ms, P99=120.63ms
+Concurrency 5  | Success: 100.0% | RPS: 17.60 | Latency: Avg=279.63ms, P50=273.80ms, P90=335.00ms, P99=367.67ms
+Concurrency 10 | Success: 100.0% | RPS: 17.79 | Latency: Avg=543.78ms, P50=555.43ms, P90=612.85ms, P99=666.84ms
 
 ==================================================
                   End of Report                   
