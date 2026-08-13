@@ -8,3 +8,39 @@ pillow
 python-multipart
 prometheus-client
 requests
+ 
+# Core web + inference libraries
+fastapi
+uvicorn
+
+# Image processing / augmentation
+albumentations
+opencv-python
+Pillow
+
+# Numerical / plotting
+numpy
+matplotlib
+
+# YOLO & export/runtime
+# For training/inference with Ultralytics YOLO (choose CPU or GPU build for torch)
+ultralytics
+
+# PyTorch - choose appropriate build for your environment:
+# - CPU: torch==2.2.0+cpu torchvision==0.15.2+cpu -f https://download.pytorch.org/whl/torch_stable.html
+# - GPU (CUDA 11/12/13): install from PyTorch site matching your CUDA driver
+torch
+torchvision
+
+# ONNX runtime - use onnxruntime-gpu if running GPU inference
+onnx
+onnxruntime
+
+# Optional: TensorRT Python bindings are system-specific (not installed via pip on most systems)
+# See docs for TensorRT / NVIDIA package install instructions
+
+# Utilities
+python-multipart
+prometheus-client
+requests
+tqdm
