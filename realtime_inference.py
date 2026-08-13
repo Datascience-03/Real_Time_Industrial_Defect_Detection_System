@@ -3,10 +3,10 @@ import time
 from ultralytics import YOLO
 
 # 1. Load the model (Works with 'model.engine', 'model.onnx', or 'yolov8n.pt')
-model = YOLO("model.engine")
+model = YOLO("runs/detect/train/weights/best.onnx")
 
 # 2. Open Video Stream (Use 0 for webcam, or 'video.mp4' for a video file)
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture("dataset/vedios/sample1.mp4")
 
 prev_time = time.time()
 
@@ -31,7 +31,7 @@ while cap.isOpened():
     # 6. Display FPS Counter on top-left of video
     cv2.putText(
         annotated_frame,
-        f"TensorRT FPS: {fps:.2f}",
+        f"ONNX FPS: {fps:.2f}",
         (20, 50),
         cv2.FONT_HERSHEY_SIMPLEX,
         1.0,
