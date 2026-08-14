@@ -40,7 +40,8 @@ def benchmark_model(model_path, device="cpu", num_runs=50, imgsz=640):
     return avg_latency, fps
 
 def main():
-    pt_path = "runs/detect/train/weights/best.pt"
+    from src.utils import get_checkpoint_path
+    pt_path = get_checkpoint_path() or "runs/detect/train/weights/best.pt"
     onnx_path = "runs/detect/train/weights/best.onnx"
     
     # Verify files exist

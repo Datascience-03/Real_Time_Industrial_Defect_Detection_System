@@ -7,7 +7,8 @@
 # Perform YOLO inference on uploaded image.
 
 # Return prediction along with metadata.
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File
+from fastapi.responses import JSONResponse
 from ultralytics import YOLO
 from PIL import Image
 from datetime import datetime
@@ -36,7 +37,9 @@ Features
 # Load YOLO Model
 # ----------------------------------------------------
 
-MODEL_PATH = "runs/detect/train/weights/best.pt"
+from src.utils import get_checkpoint_path
+
+MODEL_PATH = get_checkpoint_path() or "runs/detect/train/weights/best.pt"
 
 try:
     model = YOLO(MODEL_PATH)
@@ -114,18 +117,24 @@ def version():
 async def predict(file: UploadFile = File(...)):
 
     if not model_loaded:
-        raise HTTPException(
-            status_code=500,
-            detail="YOLO model not loaded."
-        )
+        return JSONResponse(status_code=503, content={
+            "filename": file.filename if hasattr(file, 'filename') else None,
+            "model": "YOLOv8",
+            "detections": 0,
+            "width": None,
+            "height": None,
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "inference_time_ms": None,
+            "error": "YOLO model not loaded"
+        })
 
     try:
         image = Image.open(file.file).convert("RGB")
     except Exception:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid image file."
-        )
+        return JSONResponse(status_code=400, content={
+            "filename": file.filename if hasattr(file, 'filename') else None,
+            "error": "Invalid image file."
+        })
 
     width, height = image.size
 

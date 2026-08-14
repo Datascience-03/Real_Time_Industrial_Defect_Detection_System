@@ -1,0 +1,29 @@
+## TensorRT-ready GPU Dockerfile
+# This Dockerfile uses an NVIDIA TensorRT base image from NGC that already
+# includes TensorRT and `trtexec`. Pulling images from NGC may require
+# an NVIDIA NGC account and authentication. If you cannot access NGC, use
+# `Dockerfile.gpu` and install TensorRT packages manually on a host/container
+# that supports your platform.
+
+# Example NGC image (note: user must have access):
+FROM nvcr.io/nvidia/tensorrt:23.09-py3
+
+WORKDIR /workspace
+
+# Install lightweight utilities and pip
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3-pip python3-setuptools git tzdata ca-certificates curl && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN python3 -m pip install --upgrade pip
+
+# Copy requirements and install. Use GPU wheels (torch/onnxruntime-gpu) appropriate for the base image.
+COPY requirements.txt /workspace/requirements.txt
+RUN pip install --no-cache-dir -r /workspace/requirements.txt || true
+
+# Copy repo
+COPY . /workspace
+
+EXPOSE 8000
+
+CMD ["python3", "realtime_inference.py"]

@@ -1,3 +1,20 @@
+import os
+
+
+def get_checkpoint_path(directory="runs/detect/train/weights", prefer="best.pt"):
+    """Return the preferred checkpoint if present, otherwise fallback to last.pt or any .pt in directory."""
+    pref = os.path.join(directory, prefer)
+    last = os.path.join(directory, "last.pt")
+    if os.path.exists(pref):
+        return pref
+    if os.path.exists(last):
+        return last
+    # fallback to any .pt file
+    if os.path.isdir(directory):
+        for fname in os.listdir(directory):
+            if fname.endswith('.pt'):
+                return os.path.join(directory, fname)
+    return None
 def yolo_to_voc(x_center, y_center, w, h, img_width, img_height):
     """
     Converts YOLO format bounding box (normalized center x, center y, width, height)

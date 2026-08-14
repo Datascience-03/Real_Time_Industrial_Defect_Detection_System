@@ -4,7 +4,8 @@ import cv2
 from ultralytics import YOLO
 
 def main():
-    model_path = "runs/detect/train/weights/best.pt"
+    from src.utils import get_checkpoint_path
+    model_path = get_checkpoint_path() or "runs/detect/train/weights/best.pt"
     video_path = "dataset/vedios/sample1.mp4"
     output_video_path = "outputs/demo_video.mp4"
     screenshot_dir = "outputs/sample_results"

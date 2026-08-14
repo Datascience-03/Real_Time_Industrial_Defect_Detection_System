@@ -1,11 +1,24 @@
-fastapi
-uvicorn
-albumentations
-opencv-python
-numpy
-matplotlib
-pillow
+fastapi>=0.95
+uvicorn>=0.22
+ultralytics>=8.4
+opencv-python>=4.7
+numpy>=1.24
+matplotlib>=3.7
+Pillow>=10.0
+albumentations>=1.3
+
+# NOTE: Install `torch` and `onnxruntime` appropriate for your platform.
+# For CPU-only environments, install the CPU wheels from PyTorch.
+# For GPU environments, install CUDA-enabled PyTorch and `onnxruntime-gpu`.
+# Examples (do NOT hardcode here — choose per-host):
+#   pip install --index-url https://download.pytorch.org/whl/cu121 torch torchvision
+#   pip install onnxruntime-gpu
+
+# Utilities
 python-multipart
 prometheus-client
 requests
-ultralytics
+tqdm
+
+# Optional: TensorRT Python bindings are system-specific and usually installed
+# via NVIDIA packages on the host or inside an NVIDIA-provided container.

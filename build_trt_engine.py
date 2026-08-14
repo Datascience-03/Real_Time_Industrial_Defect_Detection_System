@@ -1,48 +1,83 @@
 import os
 import time
-import tensorrt as trt
+import shutil
+import subprocess
 import numpy as np
 from ultralytics import YOLO
 
+try:
+    import tensorrt as trt
+    TRT_AVAILABLE = True
+except Exception:
+    trt = None
+    TRT_AVAILABLE = False
+
 def build_engine_from_onnx(onnx_path="model.onnx", engine_path="model.engine"):
+    """Attempt to build a TensorRT engine from an ONNX model.
+
+    This function prefers native TensorRT Python bindings. If they are not
+    available it will fall back to invoking the `trtexec` CLI if present on PATH.
+    If neither is available it prints instructions for the user.
     """
-    Converts model.onnx -> model.engine using native TensorRT 11 C++ bindings.
-    """
-    logger = trt.Logger(trt.Logger.WARNING)
-    builder = trt.Builder(logger)
-    
-    flag = 1 << int(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH) if hasattr(trt.NetworkDefinitionCreationFlag, 'EXPLICIT_BATCH') else 0
-    network = builder.create_network(flag) if flag else builder.create_network()
-    parser = trt.OnnxParser(network, logger)
-    
-    print(f"[1/2] Reading '{onnx_path}' and compiling TensorRT Engine on RTX GPU...")
-    with open(onnx_path, 'rb') as f:
-        if not parser.parse(f.read()):
-            print("Failed to parse ONNX file:")
-            for i in range(parser.num_errors):
-                print(parser.get_error(i))
+    if TRT_AVAILABLE:
+        logger = trt.Logger(trt.Logger.WARNING)
+        builder = trt.Builder(logger)
+
+        flag = 1 << int(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH) if hasattr(trt.NetworkDefinitionCreationFlag, 'EXPLICIT_BATCH') else 0
+        network = builder.create_network(flag) if flag else builder.create_network()
+        parser = trt.OnnxParser(network, logger)
+
+        print(f"[1/2] Reading '{onnx_path}' and compiling TensorRT Engine using TensorRT Python API...")
+        with open(onnx_path, 'rb') as f:
+            if not parser.parse(f.read()):
+                print("Failed to parse ONNX file:")
+                for i in range(parser.num_errors):
+                    print(parser.get_error(i))
+                return False
+
+        config = builder.create_builder_config()
+        if hasattr(config, "set_memory_pool_limit"):
+            config.set_memory_pool_limit(trt.MemoryPoolType.WORKSPACE, 1 << 30)
+        else:
+            config.max_workspace_size = 1 << 30
+
+        if hasattr(trt.BuilderFlag, 'FP16'):
+            config.set_flag(trt.BuilderFlag.FP16)
+
+        serialized_engine = builder.build_serialized_network(network, config)
+        if serialized_engine is None:
+            print("Error: Engine build failed!")
             return False
 
-    config = builder.create_builder_config()
-    
-    if hasattr(config, "set_memory_pool_limit"):
-        config.set_memory_pool_limit(trt.MemoryPoolType.WORKSPACE, 1 << 30) # 1 GB
-    else:
-        config.max_workspace_size = 1 << 30
+        with open(engine_path, 'wb') as f:
+            f.write(serialized_engine)
 
-    if hasattr(trt.BuilderFlag, 'FP16'):
-        config.set_flag(trt.BuilderFlag.FP16)
+        print(f" Successfully compiled TensorRT engine: '{engine_path}'")
+        return True
 
-    serialized_engine = builder.build_serialized_network(network, config)
-    if serialized_engine is None:
-        print("Error: Engine build failed!")
-        return False
+    # Fallback: use trtexec CLI if available
+    trtexec = shutil.which('trtexec')
+    if trtexec:
+        print(f"TensorRT Python bindings not found; using trtexec at {trtexec} to build engine...")
+        cmd = [
+            trtexec,
+            f"--onnx={onnx_path}",
+            f"--saveEngine={engine_path}",
+            "--workspace=4096",
+            "--fp16"
+        ]
+        try:
+            res = subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+            print(res.stdout)
+            return os.path.exists(engine_path)
+        except subprocess.CalledProcessError as e:
+            print("trtexec failed:")
+            print(e.stdout)
+            return False
 
-    with open(engine_path, 'wb') as f:
-        f.write(serialized_engine)
-        
-    print(f" Successfully compiled TensorRT engine: '{engine_path}'")
-    return True
+    print("TensorRT not available: neither Python bindings nor `trtexec` found on PATH.")
+    print("To build a TensorRT engine, either: (a) install TensorRT Python bindings on the host, or (b) run inside an NVIDIA container that includes `trtexec`/TensorRT.")
+    return False
 
 def benchmark_engine(engine_path="model.engine"):
     """

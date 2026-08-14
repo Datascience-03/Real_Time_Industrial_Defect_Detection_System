@@ -1,0 +1,8 @@
+# Template for pinned requirements. Run `scripts/pin_requirements.sh` to generate actual pins.
+# Example entries (replace with output from pip freeze):
+# ultralytics==8.4.117
+# numpy==1.24.4
+# opencv-python==4.7.0.68
+# Pillow==9.5.0
+
+# After running the pin script, the generated file `requirements-pinned.txt` will contain exact versions.
