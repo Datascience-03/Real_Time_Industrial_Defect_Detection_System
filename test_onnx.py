@@ -1,6 +1,17 @@
 from ultralytics import YOLO
+import os
 
-model = YOLO("model.onnx", task="detect")
+# Use `model.onnx` if available, otherwise fallback to `yolov8n.onnx` in repo root
+# Prefer the exported trained ONNX if present
+possible_paths = [
+    "runs/detect/train/weights/best.onnx",
+    "model.onnx",
+    "yolov8n.onnx",
+]
+
+model_path = next((p for p in possible_paths if os.path.exists(p)), possible_paths[-1])
+print(f"Loading ONNX model from: {model_path}")
+model = YOLO(model_path, task="detect")
 
 image_path = "dataset/test/images/rolled-in_scale_277.jpg"
 

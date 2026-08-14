@@ -1,0 +1,16 @@
+# Requirements for GPU-enabled environments (edit to match your CUDA/toolkit)
+# NOTE: Install CUDA-enabled PyTorch and onnxruntime-gpu appropriate for your CUDA version.
+# Example (adjust CUDA version and Python):
+# pip install --index-url https://download.pytorch.org/whl/cu121 torch torchvision
+# pip install onnxruntime-gpu
+
+# Core requirements (same as `requirements.txt`) - keep minimal here
+ultralytics
+opencv-python
+numpy
+onnx
+onnxruntime
+
+# GPU-specific runtime suggestions (install appropriate wheels manually):
+# torch (CUDA-enabled) - install from PyTorch site
+# onnxruntime-gpu - install from PyPI

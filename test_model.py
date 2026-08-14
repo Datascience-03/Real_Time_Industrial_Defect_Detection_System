@@ -1,6 +1,8 @@
 from ultralytics import YOLO
+from src.utils import get_checkpoint_path
 
-model = YOLO("runs/detect/train/weights/best.pt")
+ckpt = get_checkpoint_path()
+model = YOLO(ckpt if ckpt is not None else "yolov8n.pt")
 
 image_path = "dataset/test/images/rolled-in_scale_277.jpg"
 

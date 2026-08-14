@@ -69,3 +69,92 @@ This project is a complete real-time industrial defect detection system for stee
 
 - The final reports describe successful completion of dataset preparation, model training, export, real-time video detection, API integration, monitoring, containerization, and benchmark validation.
 - For a public project overview, this README now captures the completed state and major achievements.
+
+## Quick usage
+
+Run realtime inference (image):
+
+```bash
+python realtime_inference.py --source dataset/test/images/rolled-in_scale_277.jpg --no-display
+```
+
+Run evaluation across test set (produces reports in `outputs/reports`):
+
+```bash
+python run_evaluation.py
+```
+
+Export and build TensorRT engine (host or NVIDIA container)
+
+1. Export ONNX if you don't have one:
+
+```bash
+python -c "from ultralytics import YOLO; YOLO('runs/detect/train/weights/best.pt').export(format='onnx')"
+```
+
+2a. Preferred: inside an NVIDIA container with TensorRT, run `trtexec`:
+
+```bash
+./scripts/build_trt.sh runs/detect/train/weights/best.onnx model.engine
+```
+
+2b. Or attempt via Python bindings (only possible if TensorRT is installed on host):
+
+```bash
+python build_trt_engine.py
+```
+
+Notes: If the system lacks TensorRT, `build_trt_engine.py` will fallback to `trtexec` if present, otherwise it will print instructions for installing TensorRT or using an NVIDIA container.
+
+## Container (GPU)
+
+Build and run GPU container (requires NVIDIA Container Toolkit):
+
+```bash
+docker compose -f docker-compose.gpu.yml build --pull
+docker compose -f docker-compose.gpu.yml up -d
+```
+
+CI
+- A lightweight GitHub Actions workflow is included at `.github/workflows/ci.yml` that checks Python syntax and runs a smoke script. The workflow intentionally avoids installing heavy ML packages.
+
+Additional resources added
+- `Dockerfile.gpu.trt` — a TensorRT-ready Dockerfile (based on NVIDIA NGC TensorRT image). Note: NGC images may require authentication.
+- `scripts/pin_requirements.sh` — creates a virtualenv and writes `requirements-pinned.txt` via `pip freeze`.
+- `requirements-pinned-template.txt` — template and instructions for a pinned requirements file.
+- `notebooks/demo_inference.ipynb` — a small demo notebook that runs inference on a sample test image and saves an annotated result.
+
+TensorRT build (containerized)
+
+If you cannot install TensorRT on the host, build the engine inside an NVIDIA TensorRT container using the helper scripts:
+
+Bash:
+```bash
+./scripts/build_trt_docker.sh nvcr.io/nvidia/tensorrt:23.09-py3 runs/detect/train/weights/best.onnx model.engine
+```
+
+PowerShell:
+```powershell
+.\scripts\build_trt_docker.ps1 -Image nvcr.io/nvidia/tensorrt:23.09-py3 -OnnxPath runs/detect/train/weights/best.onnx -EngineOut model.engine
+```
+
+Notes: you may need to `docker login nvcr.io` to pull NGC images. If you cannot access NGC, use a local CUDA/TensorRT-enabled image that includes `trtexec`.
+
+CI and Release
+
+- There is a GitHub Actions workflow at `.github/workflows/integration-and-trt-build.yml` that runs lightweight CPU tests and will attempt a TensorRT engine build on a self-hosted runner labeled `gpu`.
+- To create release artifacts (ONNX, model.engine, pinned requirements and Dockerfile), run:
+
+```bash
+./scripts/package_release.sh
+```
+
+or on Windows PowerShell:
+
+```powershell
+.\scripts\package_release.ps1
+```
+
+
+
+

@@ -1,0 +1,20 @@
+version: '3.8'
+services:
+  defect-detection-gpu:
+    build:
+      context: .
+      dockerfile: Dockerfile.gpu
+    image: defect-detection:gpu
+    container_name: defect-detection-gpu
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+    # Request GPUs via device_requests (requires NVIDIA Container Toolkit)
+    deploy: {}
+    device_requests:
+      - driver: nvidia
+        count: all
+        capabilities: [gpu]
+    command: python3 realtime_inference.py --no-display
+    restart: unless-stopped
