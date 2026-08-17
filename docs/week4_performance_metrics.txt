@@ -1,25 +1,25 @@
 ==================================================
       WEEK 4 API PERFORMANCE BENCHMARK REPORT      
 ==================================================
-Timestamp: 2026-08-14 22:04:28
+Timestamp: 2026-08-17 12:24:24
 Total requests per test run: 100
 Target API base URL: http://127.0.0.1:8000
 ==================================================
 
 --- Endpoint: GET /health ---
-Concurrency 1  | Success: 100.0% | RPS: 62.31 | Latency: Avg=15.78ms, P50=16.56ms, P90=25.50ms, P99=33.45ms
-Concurrency 5  | Success: 100.0% | RPS: 292.22 | Latency: Avg=16.17ms, P50=15.52ms, P90=22.86ms, P99=36.27ms
-Concurrency 10 | Success: 100.0% | RPS: 373.14 | Latency: Avg=25.11ms, P50=24.64ms, P90=31.41ms, P99=41.48ms
+Concurrency 1  | Success: 100.0% | RPS: 61.20 | Latency: Avg=16.04ms, P50=17.67ms, P90=29.76ms, P99=31.77ms
+Concurrency 5  | Success: 100.0% | RPS: 245.12 | Latency: Avg=18.82ms, P50=16.74ms, P90=30.34ms, P99=34.11ms
+Concurrency 10 | Success: 100.0% | RPS: 336.69 | Latency: Avg=27.57ms, P50=27.50ms, P90=37.81ms, P99=45.50ms
 
 --- Endpoint: POST /plc/send ---
-Concurrency 1  | Success: 100.0% | RPS: 67.00 | Latency: Avg=14.71ms, P50=16.00ms, P90=24.65ms, P99=27.87ms
-Concurrency 5  | Success: 100.0% | RPS: 350.74 | Latency: Avg=13.07ms, P50=10.59ms, P90=19.48ms, P99=53.38ms
-Concurrency 10 | Success: 100.0% | RPS: 444.10 | Latency: Avg=19.16ms, P50=18.29ms, P90=27.39ms, P99=36.50ms
+Concurrency 1  | Success: 100.0% | RPS: 68.69 | Latency: Avg=14.34ms, P50=16.08ms, P90=24.21ms, P99=28.60ms
+Concurrency 5  | Success: 100.0% | RPS: 268.16 | Latency: Avg=15.78ms, P50=13.94ms, P90=24.97ms, P99=33.12ms
+Concurrency 10 | Success: 100.0% | RPS: 301.95 | Latency: Avg=31.25ms, P50=27.02ms, P90=43.84ms, P99=72.03ms
 
 --- Endpoint: POST /predict (YOLO ONNX Inference) ---
-Concurrency 1  | Success: 100.0% | RPS: 16.20 | Latency: Avg=61.54ms, P50=60.56ms, P90=72.74ms, P99=101.88ms
-Concurrency 5  | Success: 100.0% | RPS: 19.12 | Latency: Avg=256.57ms, P50=255.45ms, P90=279.86ms, P99=327.78ms
-Concurrency 10 | Success: 100.0% | RPS: 18.49 | Latency: Avg=524.20ms, P50=533.75ms, P90=595.20ms, P99=656.08ms
+Concurrency 1  | Success: 100.0% | RPS: 11.42 | Latency: Avg=87.32ms, P50=82.30ms, P90=99.07ms, P99=133.93ms
+Concurrency 5  | Success: 100.0% | RPS: 13.19 | Latency: Avg=372.58ms, P50=377.79ms, P90=386.32ms, P99=454.49ms
+Concurrency 10 | Success: 100.0% | RPS: 12.78 | Latency: Avg=758.19ms, P50=778.76ms, P90=840.37ms, P99=900.31ms
 
 ==================================================
                   End of Report                   

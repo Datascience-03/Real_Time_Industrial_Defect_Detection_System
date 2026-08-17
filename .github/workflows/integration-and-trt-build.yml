@@ -1,4 +1,4 @@
-name: Tests and TensorRT Build
+name: Tests
 
 on:
   push:
@@ -23,19 +23,3 @@ jobs:
       - name: Run integration tests
         run: |
           python -m pytest -q tests/integration
-
-  build-trt:
-    name: Build TensorRT engine (self-hosted GPU)
-    runs-on: [self-hosted, gpu]
-    needs: test
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-      - name: Attempt TensorRT engine build
-        run: |
-          # Try Python/TensorRT build first, fall back to trtexec/docker script
-          python build_trt_engine.py || ./scripts/build_trt_docker.sh nvcr.io/nvidia/tensorrt:23.09-py3 runs/detect/train/weights/best.onnx model.engine
-        shell: bash
