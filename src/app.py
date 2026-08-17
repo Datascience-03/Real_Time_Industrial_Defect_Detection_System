@@ -1,14 +1,16 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, Query
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import Response, FileResponse
 from pydantic import BaseModel
 from ultralytics import YOLO
 from pathlib import Path
+from contextlib import asynccontextmanager
 import numpy as np
 import cv2
 import time
 import logging
 
 from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
-from fastapi.responses import Response
 
 from .metrics import (
     record_request,
@@ -43,14 +45,13 @@ ROOT = Path(__file__).resolve().parent.parent
 # Model Path
 # ==================================================
 
-MODEL_PATH = (
-    ROOT
-    / "runs"
-    / "detect"
-    / "train"
-    / "weights"
-    / "best.onnx"
+MODEL_CANDIDATES = (
+    ROOT / "runs" / "detect" / "train" / "weights" / "best.onnx",
+    ROOT / "release" / "best.onnx",
+    ROOT / "model.onnx",
 )
+MODEL_PATH = next((path for path in MODEL_CANDIDATES if path.exists()), None)
+MAX_IMAGE_SIZE_BYTES = 20 * 1024 * 1024
 
 # ==================================================
 # Load YOLO ONNX Model
@@ -58,9 +59,10 @@ MODEL_PATH = (
 
 print("Loading YOLO ONNX model...")
 
-if not MODEL_PATH.exists():
+if MODEL_PATH is None:
     raise FileNotFoundError(
-        f"Model not found: {MODEL_PATH}"
+        "ONNX model not found. Checked: "
+        + ", ".join(str(path) for path in MODEL_CANDIDATES)
     )
 
 print(f"Model path: {MODEL_PATH}")
@@ -77,11 +79,34 @@ print("Model classes:", model.names)
 # FastAPI Application
 # ==================================================
 
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    """Initialize the inference backend before accepting user uploads."""
+    warmup_image = np.zeros((640, 640, 3), dtype=np.uint8)
+    start_time = time.perf_counter()
+    model.predict(source=warmup_image, imgsz=640, conf=0.25, verbose=False)
+    logger.info("Model warm-up completed in %.3fs", time.perf_counter() - start_time)
+    yield
+
+
 app = FastAPI(
     title="Real-Time Industrial Defect Detection API",
     description="FastAPI backend for industrial defect detection using YOLO ONNX.",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan,
 )
+
+# ==================================================
+# Serve Static Dashboard
+# ==================================================
+
+STATIC_DIR = ROOT / "static"
+
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
+@app.get("/", include_in_schema=False)
+def serve_dashboard():
+    return FileResponse(str(STATIC_DIR / "index.html"))
 
 # ==================================================
 # Prometheus Request Monitoring Middleware
@@ -144,7 +169,10 @@ def health_check():
 # ==================================================
 
 @app.post("/predict")
-async def predict(file: UploadFile = File(...)):
+async def predict(
+    file: UploadFile = File(...),
+    conf: float = Query(0.25, ge=0.0, le=1.0, description="Minimum detection confidence"),
+):
 
     # --------------------------------------------------
     # Check file type
@@ -172,6 +200,12 @@ async def predict(file: UploadFile = File(...)):
         raise HTTPException(
             status_code=400,
             detail="Uploaded file is empty."
+        )
+
+    if len(image_bytes) > MAX_IMAGE_SIZE_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail="Uploaded image exceeds the 20 MB size limit."
         )
 
     # --------------------------------------------------
@@ -203,15 +237,17 @@ async def predict(file: UploadFile = File(...)):
     results = model.predict(
         source=image,
         imgsz=640,
-        conf=0.25,
+        conf=conf,
         verbose=False
     )
 
     inference_time = time.time() - start_time
     logger.info(
-    f"Prediction completed: {file.filename} | "
-    f"Inference time: {inference_time:.4f}s"
-)
+        "Prediction completed: %s | Inference time: %.4fs | conf=%.2f",
+        file.filename,
+        inference_time,
+        conf,
+    )
 
     # --------------------------------------------------
     # Calculate inference FPS
