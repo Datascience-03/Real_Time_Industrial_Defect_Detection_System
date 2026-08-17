@@ -20,9 +20,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-      - name: Run pytest (integration smoke)
+      - name: Run integration tests
         run: |
-          python -m pytest -q tests/integration -k smoke
+          python -m pytest -q tests/integration
 
   build-trt:
     name: Build TensorRT engine (self-hosted GPU)
