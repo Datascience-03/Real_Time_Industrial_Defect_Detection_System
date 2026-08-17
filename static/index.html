@@ -1,40 +1,53 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>InspectAI - Industrial Defect Detection</title>
-  <meta name="description" content="Real-time industrial steel surface defect detection powered by YOLOv8 and ONNX Runtime." />
+  <meta name="description"
+    content="Real-time industrial steel surface defect detection powered by YOLOv8 and ONNX Runtime." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet" />
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --bg:      #090b10;
-      --bg2:     #0f1117;
-      --bg3:     #151820;
-      --bg4:     #1a1e28;
-      --border:  rgba(255,255,255,.06);
-      --border2: rgba(255,255,255,.11);
-      --text:    #e2e8f0;
-      --muted:   #64748b;
-      --accent:  #6366f1;
-      --accent2: #818cf8;
-      --green:   #22c55e;
-      --yellow:  #f59e0b;
-      --red:     #ef4444;
-      --cyan:    #06b6d4;
-      --purple:  #a855f7;
-      --pink:    #ec4899;
-      --glow:    rgba(99,102,241,.18);
-      --r:       14px;
-      --r-sm:    8px;
-      --font:    'Inter', sans-serif;
-      --mono:    'JetBrains Mono', monospace;
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
 
-    html { scroll-behavior: smooth; }
+    :root {
+      --bg: #090b10;
+      --bg2: #0f1117;
+      --bg3: #151820;
+      --bg4: #1a1e28;
+      --border: rgba(255, 255, 255, .06);
+      --border2: rgba(255, 255, 255, .11);
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --accent: #6366f1;
+      --accent2: #818cf8;
+      --green: #22c55e;
+      --yellow: #f59e0b;
+      --red: #ef4444;
+      --cyan: #06b6d4;
+      --purple: #a855f7;
+      --pink: #ec4899;
+      --glow: rgba(99, 102, 241, .18);
+      --r: 14px;
+      --r-sm: 8px;
+      --font: 'Inter', sans-serif;
+      --mono: 'JetBrains Mono', monospace;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
     body {
       font-family: var(--font);
       background: var(--bg);
@@ -43,60 +56,153 @@
       overflow-x: hidden;
     }
 
-    ::-webkit-scrollbar { width: 5px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 99px; }
+    ::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border2);
+      border-radius: 99px;
+    }
 
     body::before {
       content: '';
-      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
       background-image:
-        linear-gradient(rgba(99,102,241,.035) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(99,102,241,.035) 1px, transparent 1px);
+        linear-gradient(rgba(99, 102, 241, .035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(99, 102, 241, .035) 1px, transparent 1px);
       background-size: 44px 44px;
     }
+
     body::after {
       content: '';
-      position: fixed; top: -20%; left: 50%; transform: translateX(-50%);
-      width: 700px; height: 500px; z-index: 0; pointer-events: none;
-      background: radial-gradient(ellipse, rgba(99,102,241,.10) 0%, transparent 70%);
+      position: fixed;
+      top: -20%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 700px;
+      height: 500px;
+      z-index: 0;
+      pointer-events: none;
+      background: radial-gradient(ellipse, rgba(99, 102, 241, .10) 0%, transparent 70%);
     }
 
     header {
-      position: sticky; top: 0; z-index: 50;
-      display: flex; align-items: center; justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       padding: 16px 32px;
-      background: rgba(9,11,16,.85);
+      background: rgba(9, 11, 16, .85);
       backdrop-filter: blur(18px);
       border-bottom: 1px solid var(--border2);
     }
-    .logo { display: flex; align-items: center; gap: 12px; }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
     .logo-icon {
-      width: 38px; height: 38px; border-radius: 10px;
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
       background: linear-gradient(135deg, var(--accent), var(--purple));
-      display: flex; align-items: center; justify-content: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-size: 18px;
       box-shadow: 0 0 18px var(--glow);
     }
-    .logo-text { font-size: 1.2rem; font-weight: 700; letter-spacing: -.5px; }
-    .logo-text span { color: var(--accent2); }
-    .logo-sub { font-size: .7rem; color: var(--muted); margin-top: 1px; }
-    .header-right { display: flex; align-items: center; gap: 12px; }
+
+    .logo-text {
+      font-size: 1.2rem;
+      font-weight: 700;
+      letter-spacing: -.5px;
+    }
+
+    .logo-text span {
+      color: var(--accent2);
+    }
+
+    .logo-sub {
+      font-size: .7rem;
+      color: var(--muted);
+      margin-top: 1px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
     .badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 5px 12px; border-radius: 99px;
-      font-size: .75rem; font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 99px;
+      font-size: .75rem;
+      font-weight: 500;
       border: 1px solid;
     }
-    .badge-green { background: rgba(34,197,94,.10); border-color: rgba(34,197,94,.3); color: var(--green); }
-    .badge-red   { background: rgba(239,68,68,.10);  border-color: rgba(239,68,68,.3);  color: var(--red); }
-    .badge-yellow{ background: rgba(245,158,11,.10); border-color: rgba(245,158,11,.3); color: var(--yellow); }
-    .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; animation: pulse 2s infinite; }
-    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.6;transform:scale(.8)} }
+
+    .badge-green {
+      background: rgba(34, 197, 94, .10);
+      border-color: rgba(34, 197, 94, .3);
+      color: var(--green);
+    }
+
+    .badge-red {
+      background: rgba(239, 68, 68, .10);
+      border-color: rgba(239, 68, 68, .3);
+      color: var(--red);
+    }
+
+    .badge-yellow {
+      background: rgba(245, 158, 11, .10);
+      border-color: rgba(245, 158, 11, .3);
+      color: var(--yellow);
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1)
+      }
+
+      50% {
+        opacity: .6;
+        transform: scale(.8)
+      }
+    }
 
     main {
-      position: relative; z-index: 1;
-      max-width: 1400px; margin: 0 auto;
+      position: relative;
+      z-index: 1;
+      max-width: 1400px;
+      margin: 0 auto;
       padding: 28px 28px 60px;
       display: grid;
       grid-template-columns: 1fr 360px;
@@ -111,28 +217,65 @@
       overflow: hidden;
       transition: border-color .2s;
     }
-    .card:hover { border-color: var(--border2); }
+
+    .card:hover {
+      border-color: var(--border2);
+    }
+
     .card-header {
-      display: flex; align-items: center; justify-content: space-between;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       padding: 16px 20px 14px;
       border-bottom: 1px solid var(--border);
     }
+
     .card-title {
-      display: flex; align-items: center; gap: 9px;
-      font-size: .85rem; font-weight: 600; color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: .85rem;
+      font-weight: 600;
+      color: var(--text);
     }
+
     .card-title .icon {
-      width: 28px; height: 28px; border-radius: 7px;
-      display: flex; align-items: center; justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-size: 14px;
     }
-    .icon-indigo { background: rgba(99,102,241,.18); }
-    .icon-green  { background: rgba(34,197,94,.18); }
-    .icon-cyan   { background: rgba(6,182,212,.18); }
-    .icon-purple { background: rgba(168,85,247,.18); }
-    .icon-yellow { background: rgba(245,158,11,.18); }
-    .icon-pink   { background: rgba(236,72,153,.18); }
-    .card-body { padding: 20px; }
+
+    .icon-indigo {
+      background: rgba(99, 102, 241, .18);
+    }
+
+    .icon-green {
+      background: rgba(34, 197, 94, .18);
+    }
+
+    .icon-cyan {
+      background: rgba(6, 182, 212, .18);
+    }
+
+    .icon-purple {
+      background: rgba(168, 85, 247, .18);
+    }
+
+    .icon-yellow {
+      background: rgba(245, 158, 11, .18);
+    }
+
+    .icon-pink {
+      background: rgba(236, 72, 153, .18);
+    }
+
+    .card-body {
+      padding: 20px;
+    }
 
     .stats-row {
       grid-column: 1 / -1;
@@ -140,654 +283,1169 @@
       grid-template-columns: repeat(4, 1fr);
       gap: 16px;
     }
+
     .stat-card {
       background: var(--bg2);
       border: 1px solid var(--border);
       border-radius: var(--r);
       padding: 18px 20px;
-      display: flex; flex-direction: column; gap: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
       transition: border-color .2s, transform .2s;
-      position: relative; overflow: hidden;
+      position: relative;
+      overflow: hidden;
     }
+
     .stat-card::before {
       content: '';
-      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
       background: linear-gradient(90deg, transparent, var(--accent-color, var(--accent)), transparent);
       opacity: .7;
     }
-    .stat-card:hover { border-color: var(--border2); transform: translateY(-2px); }
-    .stat-label { font-size: .72rem; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: .7px; }
-    .stat-value { font-size: 1.9rem; font-weight: 800; font-family: var(--mono); line-height: 1; }
-    .stat-sub { font-size: .72rem; color: var(--muted); }
+
+    .stat-card:hover {
+      border-color: var(--border2);
+      transform: translateY(-2px);
+    }
+
+    .stat-label {
+      font-size: .72rem;
+      font-weight: 500;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .7px;
+    }
+
+    .stat-value {
+      font-size: 1.9rem;
+      font-weight: 800;
+      font-family: var(--mono);
+      line-height: 1;
+    }
+
+    .stat-sub {
+      font-size: .72rem;
+      color: var(--muted);
+    }
 
     .upload-zone {
       border: 2px dashed var(--border2);
       border-radius: var(--r);
       background: var(--bg3);
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      gap: 14px; padding: 50px 30px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      padding: 50px 30px;
       cursor: pointer;
       transition: border-color .25s, background .25s;
       text-align: center;
     }
+
     .upload-zone.dragover {
       border-color: var(--accent);
-      background: rgba(99,102,241,.06);
+      background: rgba(99, 102, 241, .06);
     }
+
     .upload-zone:hover {
       border-color: var(--accent2);
-      background: rgba(99,102,241,.04);
+      background: rgba(99, 102, 241, .04);
     }
-    .upload-icon { font-size: 3rem; line-height: 1; }
-    .upload-title { font-size: 1rem; font-weight: 600; }
-    .upload-sub { font-size: .8rem; color: var(--muted); }
+
+    .upload-icon {
+      font-size: 3rem;
+      line-height: 1;
+    }
+
+    .upload-title {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .upload-sub {
+      font-size: .8rem;
+      color: var(--muted);
+    }
+
     .btn {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 9px 20px; border-radius: var(--r-sm);
-      font-size: .82rem; font-weight: 600; font-family: var(--font);
-      cursor: pointer; border: none; outline: none;
-      transition: all .2s; white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 20px;
+      border-radius: var(--r-sm);
+      font-size: .82rem;
+      font-weight: 600;
+      font-family: var(--font);
+      cursor: pointer;
+      border: none;
+      outline: none;
+      transition: all .2s;
+      white-space: nowrap;
     }
+
     .btn-primary {
       background: linear-gradient(135deg, var(--accent), var(--purple));
       color: #fff;
-      box-shadow: 0 4px 20px rgba(99,102,241,.35);
+      box-shadow: 0 4px 20px rgba(99, 102, 241, .35);
     }
-    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 26px rgba(99,102,241,.5); }
-    .btn-primary:active { transform: translateY(0); }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 26px rgba(99, 102, 241, .5);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
     .btn-ghost {
-      background: var(--bg4); color: var(--muted);
+      background: var(--bg4);
+      color: var(--muted);
       border: 1px solid var(--border2);
     }
-    .btn-ghost:hover { color: var(--text); border-color: var(--accent2); }
-    #fileInput { display: none; }
+
+    .btn-ghost:hover {
+      color: var(--text);
+      border-color: var(--accent2);
+    }
+
+    #fileInput {
+      display: none;
+    }
 
     .preview-wrap {
-      position: relative; border-radius: var(--r-sm);
-      background: var(--bg3); overflow: hidden;
+      position: relative;
+      border-radius: var(--r-sm);
+      background: var(--bg3);
+      overflow: hidden;
       min-height: 340px;
-      display: flex; align-items: center; justify-content: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
+
     #previewCanvas {
-      max-width: 100%; max-height: 500px;
-      display: block; border-radius: var(--r-sm);
+      max-width: 100%;
+      max-height: 500px;
+      display: block;
+      border-radius: var(--r-sm);
     }
 
     .spinner-overlay {
       display: none;
-      position: absolute; inset: 0;
-      background: rgba(9,11,16,.7); backdrop-filter: blur(6px);
-      flex-direction: column; align-items: center; justify-content: center;
-      gap: 16px; border-radius: var(--r-sm);
+      position: absolute;
+      inset: 0;
+      background: rgba(9, 11, 16, .7);
+      backdrop-filter: blur(6px);
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      border-radius: var(--r-sm);
       z-index: 10;
     }
-    .spinner-overlay.active { display: flex; }
+
+    .spinner-overlay.active {
+      display: flex;
+    }
+
     .spinner {
-      width: 44px; height: 44px; border-radius: 50%;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
       border: 3px solid var(--border2);
       border-top-color: var(--accent);
       animation: spin .8s linear infinite;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .spinner-label { font-size: .85rem; font-weight: 500; color: var(--accent2); }
 
-    .detection-list { display: flex; flex-direction: column; gap: 10px; }
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .spinner-label {
+      font-size: .85rem;
+      font-weight: 500;
+      color: var(--accent2);
+    }
+
+    .detection-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
     .detection-item {
-      background: var(--bg3); border: 1px solid var(--border);
-      border-radius: var(--r-sm); padding: 12px 14px;
-      display: flex; flex-direction: column; gap: 8px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
       transition: border-color .2s;
     }
-    .detection-item:hover { border-color: var(--border2); }
-    .det-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-    .det-name { font-size: .83rem; font-weight: 600; display: flex; align-items: center; gap: 7px; }
-    .det-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-    .det-conf { font-family: var(--mono); font-size: .78rem; font-weight: 600; padding: 2px 8px; border-radius: 99px; }
-    .det-bar-wrap { height: 4px; background: var(--bg4); border-radius: 99px; overflow: hidden; }
-    .det-bar { height: 100%; border-radius: 99px; transition: width .6s ease; }
-    .det-bbox { font-family: var(--mono); font-size: .7rem; color: var(--muted); }
+
+    .detection-item:hover {
+      border-color: var(--border2);
+    }
+
+    .det-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .det-name {
+      font-size: .83rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .det-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .det-conf {
+      font-family: var(--mono);
+      font-size: .78rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 99px;
+    }
+
+    .det-bar-wrap {
+      height: 4px;
+      background: var(--bg4);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .det-bar {
+      height: 100%;
+      border-radius: 99px;
+      transition: width .6s ease;
+    }
+
+    .det-bbox {
+      font-family: var(--mono);
+      font-size: .7rem;
+      color: var(--muted);
+    }
+
     .empty-state {
-      display: flex; flex-direction: column; align-items: center;
-      gap: 8px; padding: 36px 20px; color: var(--muted); text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 36px 20px;
+      color: var(--muted);
+      text-align: center;
     }
-    .empty-state .e-icon { font-size: 2.5rem; }
-    .empty-state p { font-size: .82rem; }
 
-    .legend { display: flex; flex-direction: column; gap: 8px; }
+    .empty-state .e-icon {
+      font-size: 2.5rem;
+    }
+
+    .empty-state p {
+      font-size: .82rem;
+    }
+
+    .legend {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
     .legend-item {
-      display: flex; align-items: center; gap: 9px;
-      font-size: .8rem; color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: .8rem;
+      color: var(--muted);
     }
-    .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 
-    .health-grid { display: flex; flex-direction: column; gap: 10px; }
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .health-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
     .health-row {
-      display: flex; align-items: center; justify-content: space-between;
-      font-size: .8rem; padding: 8px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: .8rem;
+      padding: 8px 0;
       border-bottom: 1px solid var(--border);
     }
-    .health-row:last-child { border-bottom: none; }
-    .health-key { color: var(--muted); }
-    .health-val { font-family: var(--mono); font-size: .78rem; font-weight: 500; }
 
-    .log-list { display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto; }
+    .health-row:last-child {
+      border-bottom: none;
+    }
+
+    .health-key {
+      color: var(--muted);
+    }
+
+    .health-val {
+      font-family: var(--mono);
+      font-size: .78rem;
+      font-weight: 500;
+    }
+
+    .log-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+
     .log-item {
-      display: flex; align-items: flex-start; gap: 10px;
-      font-size: .76rem; padding: 7px 10px; border-radius: var(--r-sm);
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: .76rem;
+      padding: 7px 10px;
+      border-radius: var(--r-sm);
       background: var(--bg3);
     }
-    .log-time { font-family: var(--mono); color: var(--muted); flex-shrink: 0; }
-    .log-msg { color: var(--text); }
-    .log-item.log-ok  { border-left: 2px solid var(--green); }
-    .log-item.log-err { border-left: 2px solid var(--red); }
-    .log-item.log-info{ border-left: 2px solid var(--accent); }
 
-    .sidebar { display: flex; flex-direction: column; gap: 20px; }
+    .log-time {
+      font-family: var(--mono);
+      color: var(--muted);
+      flex-shrink: 0;
+    }
 
-    .slider-wrap { display: flex; flex-direction: column; gap: 8px; }
-    .slider-label { display: flex; justify-content: space-between; font-size: .8rem; }
-    .slider-label span:last-child { font-family: var(--mono); color: var(--accent2); font-weight: 600; }
+    .log-msg {
+      color: var(--text);
+    }
+
+    .log-item.log-ok {
+      border-left: 2px solid var(--green);
+    }
+
+    .log-item.log-err {
+      border-left: 2px solid var(--red);
+    }
+
+    .log-item.log-info {
+      border-left: 2px solid var(--accent);
+    }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .slider-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .slider-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: .8rem;
+    }
+
+    .slider-label span:last-child {
+      font-family: var(--mono);
+      color: var(--accent2);
+      font-weight: 600;
+    }
+
     input[type="range"] {
-      -webkit-appearance: none; width: 100%; height: 5px;
-      border-radius: 99px; outline: none;
+      -webkit-appearance: none;
+      width: 100%;
+      height: 5px;
+      border-radius: 99px;
+      outline: none;
       background: linear-gradient(90deg, var(--accent) var(--val, 50%), var(--bg4) var(--val, 50%));
     }
+
     input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%;
-      background: var(--accent2); cursor: pointer;
-      box-shadow: 0 0 8px rgba(99,102,241,.5);
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent2);
+      cursor: pointer;
+      box-shadow: 0 0 8px rgba(99, 102, 241, .5);
     }
 
     @media (max-width: 900px) {
-      main { grid-template-columns: 1fr; }
-      .stats-row { grid-template-columns: repeat(2, 1fr); }
+      main {
+        grid-template-columns: 1fr;
+      }
+
+      .stats-row {
+        grid-template-columns: repeat(2, 1fr);
+      }
     }
+
     @media (max-width: 560px) {
-      header { padding: 14px 16px; }
-      main { padding: 16px 14px 50px; }
-      .stats-row { grid-template-columns: 1fr 1fr; }
+      header {
+        padding: 14px 16px;
+      }
+
+      main {
+        padding: 16px 14px 50px;
+      }
+
+      .stats-row {
+        grid-template-columns: 1fr 1fr;
+      }
     }
 
     @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(12px); }
-      to   { opacity: 1; transform: translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
-    .fadeup { animation: fadeUp .35s ease forwards; }
+
+    .fadeup {
+      animation: fadeUp .35s ease forwards;
+    }
   </style>
 </head>
+
 <body>
 
-<header>
-  <div class="logo">
-    <div class="logo-icon">&#128269;</div>
-    <div>
-      <div class="logo-text">Inspect<span>AI</span></div>
-      <div class="logo-sub">Industrial Defect Detection System</div>
-    </div>
-  </div>
-  <div class="header-right">
-    <div id="healthBadge" class="badge badge-yellow">
-      <span class="dot"></span>
-      <span id="healthText">Checking&hellip;</span>
-    </div>
-    <button class="btn btn-ghost" onclick="refreshHealth()">&#8635; Refresh</button>
-  </div>
-</header>
-
-<main>
-
-  <section class="stats-row" aria-label="Session statistics">
-    <div class="stat-card" style="--accent-color: var(--accent)">
-      <div class="stat-label">Images Analysed</div>
-      <div class="stat-value" id="statImages">0</div>
-      <div class="stat-sub">this session</div>
-    </div>
-    <div class="stat-card" style="--accent-color: var(--red)">
-      <div class="stat-label">Total Defects</div>
-      <div class="stat-value" id="statDefects">0</div>
-      <div class="stat-sub">detections found</div>
-    </div>
-    <div class="stat-card" style="--accent-color: var(--cyan)">
-      <div class="stat-label">Avg Latency</div>
-      <div class="stat-value" id="statLatency">&#8212;</div>
-      <div class="stat-sub">milliseconds</div>
-    </div>
-    <div class="stat-card" style="--accent-color: var(--green)">
-      <div class="stat-label">Last Inference</div>
-      <div class="stat-value" id="statLast">&#8212;</div>
-      <div class="stat-sub">ms per image</div>
-    </div>
-  </section>
-
-  <div style="display:flex;flex-direction:column;gap:20px;">
-
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">
-          <div class="icon icon-indigo">&#128228;</div>
-          Upload Image
-        </div>
-        <div style="display:flex;gap:8px;">
-          <button class="btn btn-ghost" id="clearBtn" onclick="clearAll()" style="display:none;">&#10005; Clear</button>
-          <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">&#43; Select File</button>
-        </div>
-      </div>
-      <div class="card-body">
-        <input type="file" id="fileInput" accept="image/jpeg,image/png,image/jpg" />
-        <div class="upload-zone" id="dropZone">
-          <div class="upload-icon">&#128444;</div>
-          <div class="upload-title">Drag &amp; Drop your image here</div>
-          <div class="upload-sub">Supports JPG, JPEG, PNG &middot; Max 20 MB</div>
-          <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">Browse Files</button>
-        </div>
+  <header>
+    <div class="logo">
+      <div class="logo-icon">&#128269;</div>
+      <div>
+        <div class="logo-text">Inspect<span>AI</span></div>
+        <div class="logo-sub">Industrial Defect Detection System</div>
       </div>
     </div>
-
-    <div class="card" id="previewCard" style="display:none;">
-      <div class="card-header">
-        <div class="card-title">
-          <div class="icon icon-cyan">&#128444;</div>
-          <span id="previewFilename">Preview</span>
-        </div>
-        <button class="btn btn-primary" id="analyseBtn" onclick="runAnalysis()">&#128302; Analyse</button>
+    <div class="header-right">
+      <div id="healthBadge" class="badge badge-yellow">
+        <span class="dot"></span>
+        <span id="healthText">Checking&hellip;</span>
       </div>
-      <div class="card-body">
-        <div class="preview-wrap" id="previewWrap">
-          <canvas id="previewCanvas"></canvas>
-          <div class="spinner-overlay" id="spinnerOverlay">
-            <div class="spinner"></div>
-            <div class="spinner-label">Running inference&hellip;</div>
+      <button class="btn btn-ghost" onclick="refreshHealth()">&#8635; Refresh</button>
+    </div>
+  </header>
+
+  <main>
+
+    <section class="stats-row" aria-label="Session statistics">
+      <div class="stat-card" style="--accent-color: var(--accent)">
+        <div class="stat-label">Images Analysed</div>
+        <div class="stat-value" id="statImages">0</div>
+        <div class="stat-sub">this session</div>
+      </div>
+      <div class="stat-card" style="--accent-color: var(--red)">
+        <div class="stat-label">Total Defects</div>
+        <div class="stat-value" id="statDefects">0</div>
+        <div class="stat-sub">detections found</div>
+      </div>
+      <div class="stat-card" style="--accent-color: var(--cyan)">
+        <div class="stat-label">Avg Latency</div>
+        <div class="stat-value" id="statLatency">&#8212;</div>
+        <div class="stat-sub">milliseconds</div>
+      </div>
+      <div class="stat-card" style="--accent-color: var(--green)">
+        <div class="stat-label">Last Inference</div>
+        <div class="stat-value" id="statLast">&#8212;</div>
+        <div class="stat-sub">ms per image</div>
+      </div>
+    </section>
+
+    <div style="display:flex;flex-direction:column;gap:20px;">
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <div class="icon icon-indigo">&#128228;</div>
+            Upload Image
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-ghost" id="clearBtn" onclick="clearAll()" style="display:none;">&#10005;
+              Clear</button>
+            <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">&#43; Select
+              File</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <input type="file" id="fileInput"
+            accept="image/jpeg,image/png,image/jpg,video/mp4,video/quicktime,video/x-msvideo" />
+          <div class="upload-zone" id="dropZone">
+            <div class="upload-icon">&#128444;</div>
+            <div class="upload-title">Drag &amp; Drop an image or video here</div>
+            <div class="upload-sub">
+              Supports JPG, JPEG, PNG, MP4, MOV &middot; Max 20 MB for images / 200 MB for videos
+            </div>
+            <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">Browse Files</button>
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="card" id="detectionsCard">
-      <div class="card-header">
-        <div class="card-title">
-          <div class="icon" style="background:rgba(239,68,68,.18)">&#9888;</div>
-          Detections
+      <div class="card" id="previewCard" style="display:none;">
+        <div class="card-header">
+          <div class="card-title">
+            <div class="icon icon-cyan">&#128444;</div>
+            <span id="previewFilename">Preview</span>
+          </div>
+          <button class="btn btn-primary" id="analyseBtn" onclick="runAnalysis()">&#128302; Analyse</button>
         </div>
-        <span id="detCountBadge" class="badge badge-yellow" style="display:none;"></span>
-      </div>
-      <div class="card-body">
-        <div class="detection-list" id="detectionList">
-          <div class="empty-state">
-            <div class="e-icon">&#128269;</div>
-            <p>Upload an image and click <strong>Analyse</strong> to detect defects.</p>
+        <div class="card-body">
+          <div class="preview-wrap" id="previewWrap">
+            <canvas id="previewCanvas"></canvas>
+            <div class="spinner-overlay" id="spinnerOverlay">
+              <div class="spinner"></div>
+              <div class="spinner-label">Running inference&hellip;</div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">
-          <div class="icon icon-purple">&#128203;</div>
-          Activity Log
+      <div class="card" id="detectionsCard">
+        <div class="card-header">
+          <div class="card-title">
+            <div class="icon" style="background:rgba(239,68,68,.18)">&#9888;</div>
+            Detections
+          </div>
+          <span id="detCountBadge" class="badge badge-yellow" style="display:none;"></span>
         </div>
-        <button class="btn btn-ghost" onclick="clearLog()" style="font-size:.75rem;padding:5px 10px;">Clear</button>
-      </div>
-      <div class="card-body" style="padding:14px 16px;">
-        <div class="log-list" id="logList">
-          <div class="log-item log-info">
-            <span class="log-time">--:--:--</span>
-            <span class="log-msg">InspectAI initialized. Ready for analysis.</span>
+        <div class="card-body">
+          <div class="detection-list" id="detectionList">
+            <div class="empty-state">
+              <div class="e-icon">&#128269;</div>
+              <p>Upload an image and click <strong>Analyse</strong> to detect defects.</p>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-  </div>
-
-  <aside class="sidebar">
-
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">
-          <div class="icon icon-yellow">&#9881;</div>
-          Settings
-        </div>
-      </div>
-      <div class="card-body">
-        <div class="slider-wrap">
-          <div class="slider-label">
-            <span>Confidence Threshold</span>
-            <span id="confLabel">0.25</span>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <div class="icon icon-purple">&#128203;</div>
+            Activity Log
           </div>
-          <input type="range" id="confSlider" min="0" max="100" value="25" oninput="updateConf(this.value)" />
+          <button class="btn btn-ghost" onclick="clearLog()" style="font-size:.75rem;padding:5px 10px;">Clear</button>
         </div>
-        <p style="font-size:.74rem;color:var(--muted);margin-top:10px;">
-          Detections below this threshold will be filtered out.
-        </p>
+        <div class="card-body" style="padding:14px 16px;">
+          <div class="log-list" id="logList">
+            <div class="log-item log-info">
+              <span class="log-time">--:--:--</span>
+              <span class="log-msg">InspectAI initialized. Ready for analysis.</span>
+            </div>
+          </div>
+        </div>
       </div>
+
     </div>
 
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">
-          <div class="icon icon-green">&#128154;</div>
-          System Health
+    <aside class="sidebar">
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <div class="icon icon-yellow">&#9881;</div>
+            Settings
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="slider-wrap">
+            <div class="slider-label">
+              <span>Confidence Threshold</span>
+              <span id="confLabel">0.25</span>
+            </div>
+            <input type="range" id="confSlider" min="0" max="100" value="25" oninput="updateConf(this.value)" />
+          </div>
+          <p style="font-size:.74rem;color:var(--muted);margin-top:10px;">
+            Detections below this threshold will be filtered out.
+          </p>
         </div>
       </div>
-      <div class="card-body" style="padding:14px 16px;">
-        <div class="health-grid">
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <div class="icon icon-green">&#128154;</div>
+            System Health
+          </div>
+        </div>
+        <div class="card-body" style="padding:14px 16px;">
+          <div class="health-grid">
+            <div class="health-row">
+              <span class="health-key">Status</span>
+              <span class="health-val" id="hStatus">&#8212;</span>
+            </div>
+            <div class="health-row">
+              <span class="health-key">Model</span>
+              <span class="health-val" id="hModel">&#8212;</span>
+            </div>
+            <div class="health-row">
+              <span class="health-key">Classes</span>
+              <span class="health-val" id="hClasses">&#8212;</span>
+            </div>
+            <div class="health-row">
+              <span class="health-key">Last Poll</span>
+              <span class="health-val" id="hPoll">&#8212;</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <div class="icon icon-pink">&#127991;</div>
+            Defect Classes
+          </div>
+        </div>
+        <div class="card-body" style="padding:14px 16px;">
+          <div class="legend" id="legendList"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <div class="icon icon-cyan">&#128299;</div>
+            API Endpoints
+          </div>
+        </div>
+        <div class="card-body" style="padding:14px 16px; display:flex;flex-direction:column;gap:8px;">
           <div class="health-row">
-            <span class="health-key">Status</span>
-            <span class="health-val" id="hStatus">&#8212;</span>
+            <span class="health-key">POST /predict</span>
+            <span class="badge badge-green" style="font-size:.68rem;padding:3px 8px;">Live</span>
           </div>
           <div class="health-row">
-            <span class="health-key">Model</span>
-            <span class="health-val" id="hModel">&#8212;</span>
+            <span class="health-key">GET /health</span>
+            <span class="badge badge-green" style="font-size:.68rem;padding:3px 8px;">Live</span>
           </div>
           <div class="health-row">
-            <span class="health-key">Classes</span>
-            <span class="health-val" id="hClasses">&#8212;</span>
+            <span class="health-key">GET /metrics</span>
+            <span class="badge badge-green" style="font-size:.68rem;padding:3px 8px;">Live</span>
           </div>
-          <div class="health-row">
-            <span class="health-key">Last Poll</span>
-            <span class="health-val" id="hPoll">&#8212;</span>
+          <div class="health-row" style="border:none;">
+            <span class="health-key">POST /plc/send</span>
+            <span class="badge badge-green" style="font-size:.68rem;padding:3px 8px;">Live</span>
           </div>
+          <a href="/docs" target="_blank" class="btn btn-ghost"
+            style="margin-top:6px;width:100%;justify-content:center;">
+            &#128214; Swagger Docs
+          </a>
         </div>
       </div>
-    </div>
 
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">
-          <div class="icon icon-pink">&#127991;</div>
-          Defect Classes
-        </div>
-      </div>
-      <div class="card-body" style="padding:14px 16px;">
-        <div class="legend" id="legendList"></div>
-      </div>
-    </div>
+    </aside>
 
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">
-          <div class="icon icon-cyan">&#128299;</div>
-          API Endpoints
-        </div>
-      </div>
-      <div class="card-body" style="padding:14px 16px; display:flex;flex-direction:column;gap:8px;">
-        <div class="health-row">
-          <span class="health-key">POST /predict</span>
-          <span class="badge badge-green" style="font-size:.68rem;padding:3px 8px;">Live</span>
-        </div>
-        <div class="health-row">
-          <span class="health-key">GET /health</span>
-          <span class="badge badge-green" style="font-size:.68rem;padding:3px 8px;">Live</span>
-        </div>
-        <div class="health-row">
-          <span class="health-key">GET /metrics</span>
-          <span class="badge badge-green" style="font-size:.68rem;padding:3px 8px;">Live</span>
-        </div>
-        <div class="health-row" style="border:none;">
-          <span class="health-key">POST /plc/send</span>
-          <span class="badge badge-green" style="font-size:.68rem;padding:3px 8px;">Live</span>
-        </div>
-        <a href="/docs" target="_blank" class="btn btn-ghost" style="margin-top:6px;width:100%;justify-content:center;">
-          &#128214; Swagger Docs
-        </a>
-      </div>
-    </div>
+  </main>
 
-  </aside>
+  <script>
+    const API_BASE = window.location.origin;
 
-</main>
-
-<script>
-const API_BASE = window.location.origin;
-
-const CLASS_COLORS = {
-  0: '#6366f1',
-  1: '#22c55e',
-  2: '#f59e0b',
-  3: '#ef4444',
-  4: '#06b6d4',
-  5: '#a855f7',
-};
-const CLASS_NAMES_DEFAULT = [
-  'Crazing', 'Inclusion', 'Patches',
-  'Pitted Surface', 'Rolled-in Scale', 'Scratches'
-];
-
-let currentFile  = null;
-let currentImage = null;
-let sessionImages = 0;
-let sessionDefects = 0;
-let latencies = [];
-let confThreshold = 0.25;
-let classNames = CLASS_NAMES_DEFAULT.slice();
-
-function buildLegend(names) {
-  const el = document.getElementById('legendList');
-  el.innerHTML = '';
-  names.forEach((name, i) => {
-    const color = CLASS_COLORS[i] || '#64748b';
-    const item = document.createElement('div');
-    item.className = 'legend-item';
-    item.innerHTML =
-      '<div class="legend-dot" style="background:' + color + '"></div>' +
-      '<span>' + name + '</span>';
-    el.appendChild(item);
-  });
-}
-buildLegend(classNames);
-
-async function refreshHealth() {
-  const badge = document.getElementById('healthBadge');
-  const txt   = document.getElementById('healthText');
-  try {
-    const res  = await fetch(API_BASE + '/health');
-    const data = await res.json();
-    badge.className = 'badge badge-green';
-    txt.textContent = 'Healthy';
-    document.getElementById('hStatus').textContent = data.status || '—';
-    document.getElementById('hModel').textContent  = data.model  || '—';
-    document.getElementById('hPoll').textContent   = new Date().toLocaleTimeString();
-    const cls = Object.values(data.classes || {});
-    if (cls.length) { classNames = cls; buildLegend(cls); }
-    document.getElementById('hClasses').textContent = cls.length || '—';
-    addLog('Health OK · model=' + (data.model || '?') + ' · classes=' + (cls.length || '?'), 'ok');
-  } catch(e) {
-    badge.className = 'badge badge-red';
-    txt.textContent = 'Offline';
-    document.getElementById('hStatus').textContent = 'unreachable';
-    addLog('Health check failed: ' + e.message, 'err');
-  }
-}
-refreshHealth();
-setInterval(refreshHealth, 30000);
-
-const dropZone = document.getElementById('dropZone');
-dropZone.addEventListener('dragover', function(e) { e.preventDefault(); dropZone.classList.add('dragover'); });
-dropZone.addEventListener('dragleave', function() { dropZone.classList.remove('dragover'); });
-dropZone.addEventListener('drop', function(e) {
-  e.preventDefault();
-  dropZone.classList.remove('dragover');
-  var f = e.dataTransfer.files[0];
-  if (f) loadFile(f);
-});
-document.getElementById('fileInput').addEventListener('change', function(e) {
-  if (e.target.files[0]) loadFile(e.target.files[0]);
-});
-
-function loadFile(file) {
-  if (!file.type.match(/image\/(jpeg|jpg|png)/)) {
-    addLog('Rejected: ' + file.name + ' — unsupported type', 'err');
-    return;
-  }
-  if (file.size > 20 * 1024 * 1024) {
-    addLog('Rejected: ' + file.name + ' — exceeds 20 MB limit', 'err');
-    return;
-  }
-  currentFile = file;
-  var reader = new FileReader();
-  reader.onload = function(ev) {
-    var img = new Image();
-    img.onload = function() {
-      currentImage = img;
-      drawImageOnCanvas(img, []);
-      document.getElementById('previewCard').style.display = '';
-      document.getElementById('previewCard').classList.add('fadeup');
-      document.getElementById('previewFilename').textContent = file.name;
-      document.getElementById('clearBtn').style.display = '';
-      document.getElementById('dropZone').style.display = 'none';
-      resetDetections();
-      addLog('Loaded: ' + file.name + ' (' + (file.size/1024).toFixed(1) + ' KB)', 'info');
+    const CLASS_COLORS = {
+      0: '#6366f1',
+      1: '#22c55e',
+      2: '#f59e0b',
+      3: '#ef4444',
+      4: '#06b6d4',
+      5: '#a855f7',
     };
-    img.src = ev.target.result;
-  };
-  reader.readAsDataURL(file);
-}
+    const CLASS_NAMES_DEFAULT = [
+      'Crazing', 'Inclusion', 'Patches',
+      'Pitted Surface', 'Rolled-in Scale', 'Scratches'
+    ];
 
-function drawImageOnCanvas(img, detections) {
-  var canvas = document.getElementById('previewCanvas');
-  var wrap   = document.getElementById('previewWrap');
-  var MAX_W  = wrap.clientWidth || 720;
-  var scale  = Math.min(MAX_W / img.width, 500 / img.height, 1);
-  canvas.width  = img.width  * scale;
-  canvas.height = img.height * scale;
-  var ctx = canvas.getContext('2d');
-  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-  detections.forEach(function(det) {
-    if (det.confidence < confThreshold) return;
-    var color = CLASS_COLORS[det.class_id] || '#64748b';
-    var b = det.bbox;
-    var x1 = b[0]*scale, y1 = b[1]*scale, x2 = b[2]*scale, y2 = b[3]*scale;
-    var label = (classNames[det.class_id] || det.class_name) + ' ' + (det.confidence*100).toFixed(1) + '%';
-    ctx.strokeStyle = color;
-    ctx.lineWidth   = 2;
-    ctx.strokeRect(x1, y1, x2-x1, y2-y1);
-    ctx.fillStyle = color + '22';
-    ctx.fillRect(x1, y1, x2-x1, y2-y1);
-    ctx.font = 'bold 12px Inter, sans-serif';
-    var tw = ctx.measureText(label).width;
-    ctx.fillStyle = color;
-    ctx.fillRect(x1-1, y1-22, tw+10, 20);
-    ctx.fillStyle = '#fff';
-    ctx.fillText(label, x1+4, y1-7);
-  });
-}
+    let currentFile = null;
+    let currentImage = null;
+    let sessionImages = 0;
+    let sessionDefects = 0;
+    let latencies = [];
+    let confThreshold = 0.25;
+    let classNames = CLASS_NAMES_DEFAULT.slice();
 
-async function runAnalysis() {
-  if (!currentFile) return;
-  var overlay = document.getElementById('spinnerOverlay');
-  var btn     = document.getElementById('analyseBtn');
-  overlay.classList.add('active');
-  btn.disabled = true;
-  btn.textContent = '...';
-  var t0 = performance.now();
-  var fd = new FormData();
-  fd.append('file', currentFile);
-  try {
-    var res  = await fetch(API_BASE + '/predict?conf=' + confThreshold.toFixed(2), { method: 'POST', body: fd });
-    var data = await res.json();
-    if (!res.ok) throw new Error(data.detail || 'HTTP ' + res.status);
-    var dets = data.detections || [];
-    drawImageOnCanvas(currentImage, dets);
-    renderDetections(dets);
-    updateStats(data.inference_time_ms, dets.length);
-    addLog('Analysed: ' + data.filename + ' -> ' + dets.length + ' defect(s) in ' + data.inference_time_ms + ' ms', 'ok');
-  } catch(e) {
-    addLog('Analysis failed: ' + e.message, 'err');
-    renderError(e.message);
-  } finally {
-    overlay.classList.remove('active');
-    btn.disabled = false;
-    btn.innerHTML = '&#128302; Analyse';
-  }
-}
+    function buildLegend(names) {
+      const el = document.getElementById('legendList');
+      el.innerHTML = '';
+      names.forEach((name, i) => {
+        const color = CLASS_COLORS[i] || '#64748b';
+        const item = document.createElement('div');
+        item.className = 'legend-item';
+        item.innerHTML =
+          '<div class="legend-dot" style="background:' + color + '"></div>' +
+          '<span>' + name + '</span>';
+        el.appendChild(item);
+      });
+    }
+    buildLegend(classNames);
 
-function renderDetections(dets) {
-  var list  = document.getElementById('detectionList');
-  var badge = document.getElementById('detCountBadge');
-  if (!dets.length) {
-    list.innerHTML = '<div class="empty-state"><div class="e-icon">&#10003;</div><p>No defects detected above the confidence threshold.</p></div>';
-    badge.style.display = 'none';
-    return;
-  }
-  badge.style.display = '';
-  badge.className = 'badge badge-red';
-  badge.textContent = dets.length + ' defect' + (dets.length > 1 ? 's' : '');
-  list.innerHTML = dets.map(function(d, i) {
-    var color = CLASS_COLORS[d.class_id] || '#64748b';
-    var name  = classNames[d.class_id]   || d.class_name;
-    var pct   = (d.confidence * 100).toFixed(1);
-    return '<div class="detection-item fadeup" style="animation-delay:' + (i*60) + 'ms">' +
-      '<div class="det-top">' +
-        '<div class="det-name">' +
+    async function refreshHealth() {
+      const badge = document.getElementById('healthBadge');
+      const txt = document.getElementById('healthText');
+      try {
+        const res = await fetch(API_BASE + '/health');
+        const data = await res.json();
+        badge.className = 'badge badge-green';
+        txt.textContent = 'Healthy';
+        document.getElementById('hStatus').textContent = data.status || '—';
+        document.getElementById('hModel').textContent = data.model || '—';
+        document.getElementById('hPoll').textContent = new Date().toLocaleTimeString();
+        const cls = Object.values(data.classes || {});
+        if (cls.length) { classNames = cls; buildLegend(cls); }
+        document.getElementById('hClasses').textContent = cls.length || '—';
+        addLog('Health OK · model=' + (data.model || '?') + ' · classes=' + (cls.length || '?'), 'ok');
+      } catch (e) {
+        badge.className = 'badge badge-red';
+        txt.textContent = 'Offline';
+        document.getElementById('hStatus').textContent = 'unreachable';
+        addLog('Health check failed: ' + e.message, 'err');
+      }
+    }
+    refreshHealth();
+    setInterval(refreshHealth, 30000);
+
+    const dropZone = document.getElementById('dropZone');
+    dropZone.addEventListener('dragover', function (e) { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', function () { dropZone.classList.remove('dragover'); });
+    dropZone.addEventListener('drop', function (e) {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      var f = e.dataTransfer.files[0];
+      if (f) loadFile(f);
+    });
+    document.getElementById('fileInput').addEventListener('change', function (e) {
+      if (e.target.files[0]) loadFile(e.target.files[0]);
+    });
+
+    function loadFile(file) {
+      const isImage = /^image\/(jpeg|jpg|png)$/.test(file.type);
+      const isVideo = /^video\/(mp4|quicktime|x-msvideo)$/.test(file.type);
+
+      if (!isImage && !isVideo) {
+        addLog(
+          'Rejected: ' + file.name + ' — supported formats are JPG, PNG, and MP4',
+          'err'
+        );
+        return;
+      }
+
+      // 200 MB limit for videos, 20 MB for images
+      const maxSize = isVideo
+        ? 200 * 1024 * 1024
+        : 20 * 1024 * 1024;
+
+      if (file.size > maxSize) {
+        addLog(
+          'Rejected: ' + file.name + ' — exceeds the file size limit',
+          'err'
+        );
+        return;
+      }
+
+      currentFile = file;
+
+      // ==================================================
+      // VIDEO
+      // ==================================================
+      if (isVideo) {
+        currentImage = null;
+
+        const videoUrl = URL.createObjectURL(file);
+
+        const video = document.createElement('video');
+
+        video.controls = true;
+        video.muted = true;
+        video.playsInline = true;
+        video.src = videoUrl;
+
+        video.style.maxWidth = '100%';
+        video.style.maxHeight = '500px';
+        video.style.display = 'block';
+        video.style.borderRadius = '8px';
+
+        const previewWrap = document.getElementById('previewWrap');
+
+        // Remove old canvas
+        const oldCanvas = document.getElementById('previewCanvas');
+
+        if (oldCanvas) {
+          oldCanvas.style.display = 'none';
+        }
+
+        // Remove previous video if present
+        const oldVideo = document.getElementById('previewVideo');
+
+        if (oldVideo) {
+          oldVideo.remove();
+        }
+
+        video.id = 'previewVideo';
+
+        previewWrap.appendChild(video);
+
+        document.getElementById('previewCard').style.display = '';
+        document.getElementById('previewCard').classList.add('fadeup');
+
+        document.getElementById('previewFilename').textContent =
+          file.name;
+
+        document.getElementById('clearBtn').style.display = '';
+
+        document.getElementById('dropZone').style.display = 'none';
+
+        resetDetections();
+
+        addLog(
+          'Loaded video: ' +
+          file.name +
+          ' (' +
+          (file.size / 1024 / 1024).toFixed(2) +
+          ' MB)',
+          'info'
+        );
+
+        return;
+      }
+
+      // ==================================================
+      // IMAGE
+      // ==================================================
+
+      const reader = new FileReader();
+
+      reader.onload = function (ev) {
+
+        const img = new Image();
+
+        img.onload = function () {
+
+          currentImage = img;
+
+          const canvas = document.getElementById('previewCanvas');
+
+          canvas.style.display = 'block';
+
+          const oldVideo =
+            document.getElementById('previewVideo');
+
+          if (oldVideo) {
+            oldVideo.remove();
+          }
+
+          drawImageOnCanvas(img, []);
+
+          document.getElementById('previewCard').style.display = '';
+
+          document
+            .getElementById('previewCard')
+            .classList.add('fadeup');
+
+          document.getElementById('previewFilename').textContent =
+            file.name;
+
+          document.getElementById('clearBtn').style.display = '';
+
+          document.getElementById('dropZone').style.display = 'none';
+
+          resetDetections();
+
+          addLog(
+            'Loaded: ' +
+            file.name +
+            ' (' +
+            (file.size / 1024).toFixed(1) +
+            ' KB)',
+            'info'
+          );
+        };
+
+        img.src = ev.target.result;
+      };
+
+      reader.readAsDataURL(file);
+    }
+
+    function drawImageOnCanvas(img, detections) {
+      var canvas = document.getElementById('previewCanvas');
+      var wrap = document.getElementById('previewWrap');
+      var MAX_W = wrap.clientWidth || 720;
+      var scale = Math.min(MAX_W / img.width, 500 / img.height, 1);
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      detections.forEach(function (det) {
+        if (det.confidence < confThreshold) return;
+        var color = CLASS_COLORS[det.class_id] || '#64748b';
+        var b = det.bbox;
+        var x1 = b[0] * scale, y1 = b[1] * scale, x2 = b[2] * scale, y2 = b[3] * scale;
+        var label = (classNames[det.class_id] || det.class_name) + ' ' + (det.confidence * 100).toFixed(1) + '%';
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+        ctx.fillStyle = color + '22';
+        ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
+        ctx.font = 'bold 12px Inter, sans-serif';
+        var tw = ctx.measureText(label).width;
+        ctx.fillStyle = color;
+        ctx.fillRect(x1 - 1, y1 - 22, tw + 10, 20);
+        ctx.fillStyle = '#fff';
+        ctx.fillText(label, x1 + 4, y1 - 7);
+      });
+    }
+
+    async function runAnalysis() {
+      if (!currentFile) return;
+
+      var overlay = document.getElementById('spinnerOverlay');
+      var btn = document.getElementById('analyseBtn');
+
+      overlay.classList.add('active');
+      btn.disabled = true;
+      btn.textContent = '...';
+
+      var fd = new FormData();
+      fd.append('file', currentFile);
+
+      try {
+        var isVideo = currentFile.type.startsWith('video/');
+
+        if (isVideo) {
+          addLog('Uploading video for defect detection...', 'info');
+
+          var videoRes = await fetch(
+            API_BASE + '/predict-video?conf=' + confThreshold.toFixed(2),
+            {
+              method: 'POST',
+              body: fd
+            }
+          );
+
+          if (!videoRes.ok) {
+            var errorText = await videoRes.text();
+            throw new Error(errorText || 'HTTP ' + videoRes.status);
+          }
+
+          var videoBlob = await videoRes.blob();
+          var resultUrl = URL.createObjectURL(videoBlob);
+
+          var previewWrap = document.getElementById('previewWrap');
+          var oldVideo = document.getElementById('previewVideo');
+
+          if (oldVideo) {
+            oldVideo.remove();
+          }
+
+          var canvas = document.getElementById('previewCanvas');
+          canvas.style.display = 'none';
+
+          var resultVideo = document.createElement('video');
+
+          resultVideo.id = 'previewVideo';
+          resultVideo.controls = true;
+          resultVideo.muted = true;
+          resultVideo.playsInline = true;
+          resultVideo.src = resultUrl;
+
+          resultVideo.style.maxWidth = '100%';
+          resultVideo.style.maxHeight = '500px';
+          resultVideo.style.display = 'block';
+          resultVideo.style.borderRadius = '8px';
+
+          previewWrap.appendChild(resultVideo);
+
+          resetDetections();
+
+          addLog(
+            'Video analysed successfully: ' + currentFile.name,
+            'ok'
+          );
+
+          return;
+        }
+
+        var res = await fetch(
+          API_BASE + '/predict?conf=' + confThreshold.toFixed(2),
+          {
+            method: 'POST',
+            body: fd
+          }
+        );
+
+        var data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.detail || 'HTTP ' + res.status);
+        }
+
+        var dets = data.detections || [];
+
+        drawImageOnCanvas(currentImage, dets);
+        renderDetections(dets);
+
+        updateStats(
+          data.inference_time_ms,
+          dets.length
+        );
+
+        addLog(
+          'Analysed: ' +
+          data.filename +
+          ' -> ' +
+          dets.length +
+          ' defect(s) in ' +
+          data.inference_time_ms +
+          ' ms',
+          'ok'
+        );
+
+      } catch (e) {
+        addLog('Analysis failed: ' + e.message, 'err');
+        renderError(e.message);
+
+      } finally {
+        overlay.classList.remove('active');
+        btn.disabled = false;
+        btn.innerHTML = '&#128302; Analyse';
+      }
+    }
+
+    function renderDetections(dets) {
+      var list = document.getElementById('detectionList');
+      var badge = document.getElementById('detCountBadge');
+      if (!dets.length) {
+        list.innerHTML = '<div class="empty-state"><div class="e-icon">&#10003;</div><p>No defects detected above the confidence threshold.</p></div>';
+        badge.style.display = 'none';
+        return;
+      }
+      badge.style.display = '';
+      badge.className = 'badge badge-red';
+      badge.textContent = dets.length + ' defect' + (dets.length > 1 ? 's' : '');
+      list.innerHTML = dets.map(function (d, i) {
+        var color = CLASS_COLORS[d.class_id] || '#64748b';
+        var name = classNames[d.class_id] || d.class_name;
+        var pct = (d.confidence * 100).toFixed(1);
+        return '<div class="detection-item fadeup" style="animation-delay:' + (i * 60) + 'ms">' +
+          '<div class="det-top">' +
+          '<div class="det-name">' +
           '<div class="det-dot" style="background:' + color + '"></div>' + name +
-        '</div>' +
-        '<div class="det-conf" style="background:' + color + '22;color:' + color + '">' + pct + '%</div>' +
-      '</div>' +
-      '<div class="det-bar-wrap"><div class="det-bar" style="width:' + pct + '%;background:' + color + '"></div></div>' +
-      '<div class="det-bbox">bbox [' + d.bbox.map(function(v){return Math.round(v);}).join(', ') + ']</div>' +
-      '</div>';
-  }).join('');
-}
+          '</div>' +
+          '<div class="det-conf" style="background:' + color + '22;color:' + color + '">' + pct + '%</div>' +
+          '</div>' +
+          '<div class="det-bar-wrap"><div class="det-bar" style="width:' + pct + '%;background:' + color + '"></div></div>' +
+          '<div class="det-bbox">bbox [' + d.bbox.map(function (v) { return Math.round(v); }).join(', ') + ']</div>' +
+          '</div>';
+      }).join('');
+    }
 
-function renderError(msg) {
-  document.getElementById('detectionList').innerHTML =
-    '<div class="empty-state"><div class="e-icon">&#10060;</div><p style="color:var(--red)">' + msg + '</p></div>';
-}
+    function renderError(msg) {
+      document.getElementById('detectionList').innerHTML =
+        '<div class="empty-state"><div class="e-icon">&#10060;</div><p style="color:var(--red)">' + msg + '</p></div>';
+    }
 
-function resetDetections() {
-  document.getElementById('detectionList').innerHTML =
-    '<div class="empty-state"><div class="e-icon">&#128269;</div><p>Click <strong>Analyse</strong> to detect defects.</p></div>';
-  document.getElementById('detCountBadge').style.display = 'none';
-}
+    function resetDetections() {
+      document.getElementById('detectionList').innerHTML =
+        '<div class="empty-state"><div class="e-icon">&#128269;</div><p>Click <strong>Analyse</strong> to detect defects.</p></div>';
+      document.getElementById('detCountBadge').style.display = 'none';
+    }
 
-function updateStats(inferenceMs, defectCount) {
-  sessionImages++;
-  sessionDefects += defectCount;
-  latencies.push(inferenceMs);
-  var avg = Math.round(latencies.reduce(function(a,b){return a+b;},0) / latencies.length);
-  document.getElementById('statImages').textContent  = sessionImages;
-  document.getElementById('statDefects').textContent = sessionDefects;
-  document.getElementById('statLatency').textContent = avg;
-  document.getElementById('statLast').textContent    = inferenceMs;
-}
+    function updateStats(inferenceMs, defectCount) {
+      sessionImages++;
+      sessionDefects += defectCount;
+      latencies.push(inferenceMs);
+      var avg = Math.round(latencies.reduce(function (a, b) { return a + b; }, 0) / latencies.length);
+      document.getElementById('statImages').textContent = sessionImages;
+      document.getElementById('statDefects').textContent = sessionDefects;
+      document.getElementById('statLatency').textContent = avg;
+      document.getElementById('statLast').textContent = inferenceMs;
+    }
 
-function updateConf(val) {
-  confThreshold = val / 100;
-  document.getElementById('confLabel').textContent = confThreshold.toFixed(2);
-  document.getElementById('confSlider').style.setProperty('--val', val + '%');
-}
-updateConf(25);
+    function updateConf(val) {
+      confThreshold = val / 100;
+      document.getElementById('confLabel').textContent = confThreshold.toFixed(2);
+      document.getElementById('confSlider').style.setProperty('--val', val + '%');
+    }
+    updateConf(25);
 
-function addLog(msg, type) {
-  type = type || 'info';
-  var list = document.getElementById('logList');
-  var t    = new Date().toLocaleTimeString('en-GB');
-  var item = document.createElement('div');
-  item.className = 'log-item log-' + type + ' fadeup';
-  item.innerHTML = '<span class="log-time">' + t + '</span><span class="log-msg">' + msg + '</span>';
-  list.prepend(item);
-  while (list.children.length > 50) list.removeChild(list.lastChild);
-}
+    function addLog(msg, type) {
+      type = type || 'info';
+      var list = document.getElementById('logList');
+      var t = new Date().toLocaleTimeString('en-GB');
+      var item = document.createElement('div');
+      item.className = 'log-item log-' + type + ' fadeup';
+      item.innerHTML = '<span class="log-time">' + t + '</span><span class="log-msg">' + msg + '</span>';
+      list.prepend(item);
+      while (list.children.length > 50) list.removeChild(list.lastChild);
+    }
 
-function clearLog() {
-  document.getElementById('logList').innerHTML = '';
-  addLog('Log cleared.', 'info');
-}
+    function clearLog() {
+      document.getElementById('logList').innerHTML = '';
+      addLog('Log cleared.', 'info');
+    }
 
-function clearAll() {
-  currentFile  = null;
-  currentImage = null;
-  document.getElementById('previewCard').style.display = 'none';
-  document.getElementById('dropZone').style.display    = '';
-  document.getElementById('clearBtn').style.display    = 'none';
-  document.getElementById('fileInput').value = '';
-  var canvas = document.getElementById('previewCanvas');
-  canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-  resetDetections();
-  addLog('Cleared.', 'info');
-}
-</script>
+    function clearAll() {
+      currentFile = null;
+      currentImage = null;
+
+      // Remove preview video
+      const oldVideo = document.getElementById('previewVideo');
+      if (oldVideo) {
+        if (oldVideo.src && oldVideo.src.startsWith('blob:')) {
+          URL.revokeObjectURL(oldVideo.src);
+        }
+        oldVideo.remove();
+      }
+
+      // Reset canvas
+      const canvas = document.getElementById('previewCanvas');
+      canvas.style.display = 'block';
+
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Reset UI
+      document.getElementById('previewCard').style.display = 'none';
+      document.getElementById('dropZone').style.display = '';
+      document.getElementById('clearBtn').style.display = 'none';
+      document.getElementById('fileInput').value = '';
+
+      resetDetections();
+
+      addLog(
+        'Video analysed successfully: ' + currentFile.name,
+        'ok'
+      );
+    }
+  </script>
 </body>
+
 </html>
