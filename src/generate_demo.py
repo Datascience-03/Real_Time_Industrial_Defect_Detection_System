@@ -1,5 +1,6 @@
 import os
 import time
+import subprocess
 import cv2
 from ultralytics import YOLO
 
@@ -7,7 +8,8 @@ def main():
     from src.utils import get_checkpoint_path
     model_path = get_checkpoint_path() or "runs/detect/train/weights/best.pt"
     video_path = "dataset/vedios/sample1.mp4"
-    output_video_path = "outputs/demo_video.mp4"
+    output_video_path = "outputs/demo_video_raw.mp4"   # temp raw file
+    final_video_path = "outputs/demo_video.mp4"          # final H.264 file
     screenshot_dir = "outputs/sample_results"
     
     os.makedirs(screenshot_dir, exist_ok=True)
@@ -36,7 +38,7 @@ def main():
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     print(f"Video Properties: Resolution={width}x{height}, FPS={fps_in:.2f}, Total Frames={total_frames}")
     
-    # Setup video writer
+    # Setup video writer (mp4v is the most reliably supported codec across OpenCV builds)
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     out = cv2.VideoWriter(output_video_path, fourcc, fps_in, (width, height))
     
@@ -54,15 +56,12 @@ def main():
         frame_count += 1
         t0 = time.time()
         
-        # Run inference (using confidence threshold of 0.3 to catch defects)
         results = model(frame, conf=0.3, verbose=False)
         t1 = time.time()
         
-        # Calculate inference-only FPS and drawing latency
         latency_ms = (t1 - t0) * 1000
         fps = 1000.0 / latency_ms if latency_ms > 0 else 0
         
-        # Draw predictions on frame
         annotated_frame = frame.copy()
         has_detection = False
         
@@ -71,21 +70,16 @@ def main():
             if len(boxes) > 0:
                 has_detection = True
             for box in boxes:
-                # Get coordinates
                 x1, y1, x2, y2 = map(int, box.xyxy[0].tolist())
                 conf = float(box.conf[0])
                 cls = int(box.cls[0])
                 label = f"{model.names[cls]} {conf:.2f}"
                 
-                # Draw box
-                cv2.rectangle(annotated_frame, (x1, y1), (x2, y2), (0, 0, 255), 3) # Red box
-                # Draw label background
+                cv2.rectangle(annotated_frame, (x1, y1), (x2, y2), (0, 0, 255), 3)
                 (w, h), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2)
                 cv2.rectangle(annotated_frame, (x1, y1 - h - 10), (x1 + w, y1), (0, 0, 255), -1)
-                # Draw text
                 cv2.putText(annotated_frame, label, (x1, y1 - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
                 
-        # Overlay FPS on the frame
         fps_text = f"Inference FPS: {fps:.1f} ({latency_ms:.1f} ms/frame)"
         cv2.putText(
             annotated_frame,
@@ -93,19 +87,14 @@ def main():
             (20, 40),
             cv2.FONT_HERSHEY_SIMPLEX,
             0.8,
-            (0, 255, 0), # Green text
+            (0, 255, 0),
             2,
             cv2.LINE_AA
         )
         
-        # Write the annotated frame to output video
         out.write(annotated_frame)
         
-        # Save up to 3 screenshots when defects are detected (spread across the video)
         if has_detection and screenshot_count < max_screenshots:
-            # We want to avoid capturing consecutive frames, so let's space them out
-            # by at least 15 frames or check if the frame index matches a spread.
-            # Let's save on frame detection if we haven't saved for a bit.
             screenshot_path = os.path.join(screenshot_dir, f"screenshot_{screenshot_count + 1}.jpg")
             cv2.imwrite(screenshot_path, annotated_frame)
             print(f"Saved screenshot {screenshot_count + 1} at frame {frame_count} to {screenshot_path}")
@@ -117,8 +106,23 @@ def main():
     cap.release()
     out.release()
     
-    print("\nProcessing complete!")
-    print(f"Saved annotated demo video to '{output_video_path}'")
+    # Re-encode to H.264 so the video plays in browsers, VS Code, etc.
+    print("\nRe-encoding video to H.264 for playback compatibility...")
+    try:
+        subprocess.run([
+            "ffmpeg", "-y",
+            "-i", output_video_path,
+            "-c:v", "libx264",
+            "-pix_fmt", "yuv420p",
+            "-crf", "20",
+            "-preset", "medium",
+            final_video_path
+        ], check=True)
+        os.remove(output_video_path)  # clean up the raw mp4v temp file
+        print(f"Saved H.264-encoded demo video to '{final_video_path}'")
+    except (subprocess.CalledProcessError, FileNotFoundError) as e:
+        print(f"Warning: ffmpeg re-encode failed ({e}). Raw video kept at '{output_video_path}'")
+    
     print(f"Saved {screenshot_count} screenshots in '{screenshot_dir}'")
 
 if __name__ == "__main__":
