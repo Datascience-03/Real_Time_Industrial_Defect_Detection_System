@@ -1283,10 +1283,18 @@
 
           previewWrap.appendChild(resultVideo);
 
-          resetDetections();
+          var totalDets = parseInt(videoRes.headers.get('X-Detections-Count') || '0', 10);
+          var procTimeMs = parseFloat(videoRes.headers.get('X-Processing-Time-Ms') || '0');
+          var totalFrames = parseInt(videoRes.headers.get('X-Frame-Count') || '0', 10);
+          var summaryStr = videoRes.headers.get('X-Detections-Summary') || '{}';
+          var summary = JSON.parse(summaryStr);
+
+          renderVideoSummary(totalDets, summary, procTimeMs, totalFrames);
+          updateStats(Math.round(procTimeMs), totalDets);
 
           addLog(
-            'Video analysed successfully: ' + currentFile.name,
+            'Video analysed successfully: ' + currentFile.name +
+            ' (' + totalDets + ' defect(s) detected across ' + totalFrames + ' frames)',
             'ok'
           );
 
@@ -1367,6 +1375,50 @@
       }).join('');
     }
 
+    function renderVideoSummary(totalDets, summary, procTimeMs, totalFrames) {
+      var list = document.getElementById('detectionList');
+      var badge = document.getElementById('detCountBadge');
+
+      if (totalDets === 0) {
+        list.innerHTML = '<div class="empty-state"><div class="e-icon">&#10003;</div><p>No defects detected in the video above the confidence threshold.</p></div>';
+        badge.style.display = 'none';
+        return;
+      }
+
+      badge.style.display = '';
+      badge.className = 'badge badge-red';
+      badge.textContent = totalDets + ' defect' + (totalDets > 1 ? 's' : '');
+
+      var html = '<div class="video-summary-header" style="margin-bottom:12px;font-size:0.85rem;color:var(--muted)">' +
+                 'Processed ' + totalFrames + ' frames in ' + (procTimeMs / 1000).toFixed(2) + 's' +
+                 '</div>';
+
+      var activeClasses = Object.entries(summary).filter(function(entry) {
+        return entry[1] > 0;
+      }).sort(function(a, b) {
+        return b[1] - a[1];
+      });
+
+      html += activeClasses.map(function (entry, i) {
+        var name = entry[0];
+        var count = entry[1];
+        var classId = classNames.findIndex(function(c) {
+          return c.toLowerCase() === name.toLowerCase();
+        });
+        var color = CLASS_COLORS[classId] || '#64748b';
+        return '<div class="detection-item fadeup" style="animation-delay:' + (i * 60) + 'ms">' +
+          '<div class="det-top">' +
+          '<div class="det-name">' +
+          '<div class="det-dot" style="background:' + color + '"></div>' + name +
+          '</div>' +
+          '<div class="det-conf" style="background:' + color + '22;color:' + color + '">' + count + ' occurrences</div>' +
+          '</div>' +
+          '</div>';
+      }).join('');
+
+      list.innerHTML = html;
+    }
+
     function renderError(msg) {
       document.getElementById('detectionList').innerHTML =
         '<div class="empty-state"><div class="e-icon">&#10060;</div><p style="color:var(--red)">' + msg + '</p></div>';
@@ -1441,8 +1493,8 @@
       resetDetections();
 
       addLog(
-        'Video analysed successfully: ' + currentFile.name,
-        'ok'
+        'Cleared workspace.',
+        'info'
       );
     }
   </script>

@@ -12,6 +12,7 @@ import logging
 import os
 import tempfile
 import uuid
+import json
 
 from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 
@@ -474,9 +475,8 @@ async def predict_video(
         # Create output video writer
         # --------------------------------------------------
 
-        fourcc = cv2.VideoWriter_fourcc(
-            *"mp4v"
-        )
+        # Use avc1 (H.264) codec so the output video is playable in modern web browsers
+        fourcc = cv2.VideoWriter_fourcc(*"avc1")
 
         writer = cv2.VideoWriter(
             str(output_path),
@@ -499,6 +499,7 @@ async def predict_video(
 
         frame_number = 0
         total_detections = 0
+        class_counts = {name: 0 for name in model.names.values()}
 
         start_time = time.time()
 
@@ -552,6 +553,7 @@ async def predict_video(
                     y2 = int(coordinates[3])
 
                     class_name = model.names[class_id]
+                    class_counts[class_name] = class_counts.get(class_name, 0) + 1
 
                     # Draw bounding box
                     cv2.rectangle(
@@ -644,10 +646,19 @@ async def predict_video(
         # Return processed video
         # --------------------------------------------------
 
+        headers = {
+            "Access-Control-Expose-Headers": "X-Detections-Count, X-Processing-Time-Ms, X-Frame-Count, X-Detections-Summary",
+            "X-Detections-Count": str(total_detections),
+            "X-Processing-Time-Ms": f"{processing_time * 1000:.2f}",
+            "X-Frame-Count": str(frame_number),
+            "X-Detections-Summary": json.dumps(class_counts),
+        }
+
         return FileResponse(
             path=str(output_path),
             media_type="video/mp4",
-            filename=f"detected_{file.filename}"
+            filename=f"detected_{file.filename}",
+            headers=headers
         )
 
     except HTTPException:
