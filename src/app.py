@@ -1,6 +1,6 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException, Query
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import Response, FileResponse
+from fastapi.responses import Response, FileResponse, StreamingResponse
 from pydantic import BaseModel
 from ultralytics import YOLO
 from pathlib import Path
@@ -9,6 +9,10 @@ import numpy as np
 import cv2
 import time
 import logging
+import os
+import tempfile
+import uuid
+import json
 
 from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 
@@ -52,6 +56,26 @@ MODEL_CANDIDATES = (
 )
 MODEL_PATH = next((path for path in MODEL_CANDIDATES if path.exists()), None)
 MAX_IMAGE_SIZE_BYTES = 20 * 1024 * 1024
+
+# ==================================================
+# Video Configuration
+# ==================================================
+
+MAX_VIDEO_SIZE_BYTES = 200 * 1024 * 1024
+
+VIDEO_UPLOAD_DIR = ROOT / "uploads" / "videos"
+VIDEO_OUTPUT_DIR = ROOT / "outputs" / "videos"
+
+VIDEO_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+VIDEO_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+ALLOWED_VIDEO_TYPES = {
+    "video/mp4",
+    "video/avi",
+    "video/x-msvideo",
+    "video/mov",
+    "video/quicktime",
+}
 
 # ==================================================
 # Load YOLO ONNX Model
@@ -346,3 +370,320 @@ def receive_plc_data(payload: PLCDefectPayload):
             "confidence": payload.confidence
         }
     }
+
+    # ==================================================
+# Video Prediction Endpoint
+# ==================================================
+
+@app.post("/predict-video")
+async def predict_video(
+    file: UploadFile = File(...),
+    conf: float = Query(
+        0.25,
+        ge=0.0,
+        le=1.0,
+        description="Minimum detection confidence"
+    ),
+):
+    """
+    Upload an MP4 video, run YOLO detection on every frame,
+    and return the annotated video.
+    """
+
+    # --------------------------------------------------
+    # Check video type
+    # --------------------------------------------------
+
+    if file.content_type not in ALLOWED_VIDEO_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Please upload a video file. "
+                "Supported formats: MP4, AVI, MOV."
+            )
+        )
+
+    # --------------------------------------------------
+    # Read uploaded video
+    # --------------------------------------------------
+
+    video_bytes = await file.read()
+
+    if not video_bytes:
+        raise HTTPException(
+            status_code=400,
+            detail="Uploaded video is empty."
+        )
+
+    if len(video_bytes) > MAX_VIDEO_SIZE_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail="Uploaded video exceeds the 200 MB size limit."
+        )
+
+    # --------------------------------------------------
+    # Create unique filenames
+    # --------------------------------------------------
+
+    video_id = uuid.uuid4().hex
+
+    input_path = VIDEO_UPLOAD_DIR / f"{video_id}_input.mp4"
+    output_path = VIDEO_OUTPUT_DIR / f"{video_id}_detected.mp4"
+
+    # --------------------------------------------------
+    # Save uploaded video
+    # --------------------------------------------------
+
+    try:
+        with open(input_path, "wb") as video_file:
+            video_file.write(video_bytes)
+
+        # --------------------------------------------------
+        # Open video
+        # --------------------------------------------------
+
+        cap = cv2.VideoCapture(str(input_path))
+
+        if not cap.isOpened():
+            raise HTTPException(
+                status_code=400,
+                detail="Unable to open the uploaded video."
+            )
+
+        # --------------------------------------------------
+        # Get video properties
+        # --------------------------------------------------
+
+        fps = cap.get(cv2.CAP_PROP_FPS)
+
+        if fps <= 0:
+            fps = 25.0
+
+        width = int(
+            cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+        )
+
+        height = int(
+            cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+        )
+
+        frame_count = int(
+            cap.get(cv2.CAP_PROP_FRAME_COUNT)
+        )
+
+        # --------------------------------------------------
+        # Create output video writer
+        # --------------------------------------------------
+
+        # Use avc1 (H.264) codec so the output video is playable in modern web browsers
+        fourcc = cv2.VideoWriter_fourcc(*"avc1")
+
+        writer = cv2.VideoWriter(
+            str(output_path),
+            fourcc,
+            fps,
+            (width, height)
+        )
+
+        if not writer.isOpened():
+            cap.release()
+
+            raise HTTPException(
+                status_code=500,
+                detail="Unable to create output video."
+            )
+
+        # --------------------------------------------------
+        # Process every frame
+        # --------------------------------------------------
+
+        frame_number = 0
+        total_detections = 0
+        class_counts = {name: 0 for name in model.names.values()}
+
+        start_time = time.time()
+
+        while True:
+
+            ret, frame = cap.read()
+
+            if not ret:
+                break
+
+            frame_number += 1
+
+            # --------------------------------------------------
+            # YOLO inference
+            # --------------------------------------------------
+
+            results = model.predict(
+                source=frame,
+                imgsz=640,
+                conf=conf,
+                verbose=False
+            )
+
+            result = results[0]
+
+            frame_detections = 0
+
+            # --------------------------------------------------
+            # Draw detections
+            # --------------------------------------------------
+
+            if result.boxes is not None:
+
+                boxes = result.boxes
+
+                for i in range(len(boxes)):
+
+                    class_id = int(
+                        boxes.cls[i].item()
+                    )
+
+                    confidence = float(
+                        boxes.conf[i].item()
+                    )
+
+                    coordinates = boxes.xyxy[i].tolist()
+
+                    x1 = int(coordinates[0])
+                    y1 = int(coordinates[1])
+                    x2 = int(coordinates[2])
+                    y2 = int(coordinates[3])
+
+                    class_name = model.names[class_id]
+                    class_counts[class_name] = class_counts.get(class_name, 0) + 1
+
+                    # Draw bounding box
+                    cv2.rectangle(
+                        frame,
+                        (x1, y1),
+                        (x2, y2),
+                        (0, 255, 0),
+                        2
+                    )
+
+                    # Detection label
+                    label = (
+                        f"{class_name} "
+                        f"{confidence:.2f}"
+                    )
+
+                    cv2.putText(
+                        frame,
+                        label,
+                        (x1, max(y1 - 10, 20)),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.6,
+                        (0, 255, 0),
+                        2
+                    )
+
+                    frame_detections += 1
+
+            total_detections += frame_detections
+
+            # --------------------------------------------------
+            # Add frame information
+            # --------------------------------------------------
+
+            cv2.putText(
+                frame,
+                f"Frame: {frame_number}/{frame_count}",
+                (20, 30),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.7,
+                (255, 255, 255),
+                2
+            )
+
+            cv2.putText(
+                frame,
+                f"Detections: {frame_detections}",
+                (20, 60),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.7,
+                (255, 255, 255),
+                2
+            )
+
+            # --------------------------------------------------
+            # Write processed frame
+            # --------------------------------------------------
+
+            writer.write(frame)
+
+        # --------------------------------------------------
+        # Release resources
+        # --------------------------------------------------
+
+        cap.release()
+        writer.release()
+
+        processing_time = time.time() - start_time
+
+        logger.info(
+            "Video prediction completed: %s | "
+            "Frames=%d | Detections=%d | Time=%.2fs",
+            file.filename,
+            frame_number,
+            total_detections,
+            processing_time
+        )
+
+        # --------------------------------------------------
+        # Check output
+        # --------------------------------------------------
+
+        if not output_path.exists():
+            raise HTTPException(
+                status_code=500,
+                detail="Output video was not created."
+            )
+
+        # --------------------------------------------------
+        # Return processed video
+        # --------------------------------------------------
+
+        headers = {
+            "Access-Control-Expose-Headers": "X-Detections-Count, X-Processing-Time-Ms, X-Frame-Count, X-Detections-Summary",
+            "X-Detections-Count": str(total_detections),
+            "X-Processing-Time-Ms": f"{processing_time * 1000:.2f}",
+            "X-Frame-Count": str(frame_number),
+            "X-Detections-Summary": json.dumps(class_counts),
+        }
+
+        return FileResponse(
+            path=str(output_path),
+            media_type="video/mp4",
+            filename=f"detected_{file.filename}",
+            headers=headers
+        )
+
+    except HTTPException:
+        raise
+
+    except Exception as e:
+
+        logger.exception(
+            "Video processing failed: %s",
+            str(e)
+        )
+
+        raise HTTPException(
+            status_code=500,
+            detail=f"Video processing failed: {str(e)}"
+        )
+
+    finally:
+
+        # --------------------------------------------------
+        # Remove temporary input video
+        # --------------------------------------------------
+
+        try:
+            if input_path.exists():
+                input_path.unlink()
+        except Exception:
+            pass

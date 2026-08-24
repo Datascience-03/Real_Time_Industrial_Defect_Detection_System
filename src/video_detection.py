@@ -10,19 +10,20 @@ ROOT = Path(__file__).resolve().parent.parent
 # ==================================================
 # Model Path
 # ==================================================
-MODEL_PATH = (
-    ROOT
-    / "runs"
-    / "detect"
-    / "train"
-    / "weights"
-    / "best.pt"
-)
+MODEL_CANDIDATES = [
+    ROOT / "runs" / "detect" / "train" / "weights" / "best.onnx",
+    ROOT / "runs" / "detect" / "train" / "weights" / "best.pt",
+    ROOT / "runs" / "detect" / "train" / "weights" / "last.pt",
+    ROOT / "model.onnx",
+]
+MODEL_PATH = next((path for path in MODEL_CANDIDATES if path.exists()), None)
 
 # ==================================================
 # Video Folder
 # ==================================================
-VIDEO_DIR = ROOT / "dataset" / "vedios"
+VIDEO_DIR = ROOT / "dataset" / "videos"
+if not VIDEO_DIR.exists():
+    VIDEO_DIR = ROOT / "dataset" / "vedios"
 
 # ==================================================
 # Output Folder
@@ -150,9 +151,9 @@ def process_video(model, video_path):
 def main():
 
     # Check model
-    if not MODEL_PATH.exists():
+    if MODEL_PATH is None or not MODEL_PATH.exists():
         raise FileNotFoundError(
-            f"Model not found: {MODEL_PATH}"
+            f"Model not found. Searched in: {[str(p) for p in MODEL_CANDIDATES]}"
         )
 
     # Check video folder
