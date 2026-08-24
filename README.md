@@ -2,17 +2,20 @@
 
 > **InspectAI** — A production-ready AI system for real-time detection of steel surface defects using YOLOv8 + ONNX Runtime, served via a FastAPI backend with a live interactive web dashboard.
 
+**Team:** Datascience-03 | **Repository:** [Datascience-03/Real_Time_Industrial_Defect_Detection_System](https://github.com/Datascience-03/Real_Time_Industrial_Defect_Detection_System)
+
 ---
 
 ## 🔍 Overview
 
-This project detects 6 types of steel surface defects from both **images and MP4 videos** in real time. It includes:
+A complete end-to-end system that identifies **6 types of steel surface defects** using a YOLOv8 deep learning model. It includes:
 
 - A **YOLOv8** model trained on the NEU Surface Defect dataset (~99.5% mAP@50)
-- An **ONNX Runtime** inference backend for fast CPU/GPU inference
+- An **ONNX Runtime** inference backend for fast CPU inference
+- A **TensorRT FP16** engine for GPU-accelerated inference (10.13× speedup)
 - A **FastAPI** REST API with health monitoring, Prometheus metrics, and PLC communication
-- An **InspectAI web dashboard** for interactive defect detection via drag & drop
-- **Containerization** via Docker with GPU (TensorRT) support
+- An **InspectAI web dashboard** for interactive image & video defect detection
+- **Containerization** via Docker with GPU support
 - Full **CI/CD** via GitHub Actions
 
 ---
@@ -56,7 +59,7 @@ pip install -r requirements.txt
 uvicorn src.app:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-Then open your browser at **[http://127.0.0.1:8000](http://127.0.0.1:8000)**
+Open your browser at **[http://127.0.0.1:8000](http://127.0.0.1:8000)**
 
 ---
 
@@ -64,7 +67,7 @@ Then open your browser at **[http://127.0.0.1:8000](http://127.0.0.1:8000)**
 
 The dashboard allows you to:
 - **Upload images** (JPG, PNG) and see defect bounding boxes drawn live on the canvas
-- **Upload MP4 videos** and receive an annotated output video with detections, plus a per-class defect summary in the sidebar
+- **Upload MP4 videos** and receive an annotated output video with a per-class defect summary in the sidebar
 - Monitor **System Health**, model status, and defect class legend in real time
 
 ### API Endpoints
@@ -83,6 +86,13 @@ The dashboard allows you to:
 
 ## 🚀 Usage
 
+### Run the Web Dashboard
+
+```bash
+uvicorn src.app:app --host 127.0.0.1 --port 8000
+# Open: http://127.0.0.1:8000
+```
+
 ### Run Image Inference (Single Image)
 
 ```bash
@@ -99,11 +109,57 @@ python src/video_detection.py
 
 ### Run Model Evaluation
 
-Evaluates accuracy across the test set and generates precision-recall reports in `outputs/reports/`:
-
 ```bash
 python run_evaluation.py
 ```
+
+### Run Integration Tests (9/9 passing)
+
+```bash
+python -m pytest tests/integration -v
+```
+
+### Run API Benchmark
+
+```bash
+python src/api_benchmark.py
+```
+
+---
+
+## 📅 Week-by-Week Progress
+
+### Week 1 — Dataset Preparation
+- Downloaded and organized the **NEU Surface Defect Dataset** (6 classes)
+- Split: **80% Train / 10% Validation / 10% Test**
+- Verified integrity — zero corrupted images found
+- Generated YOLO-format annotation labels for all 6 defect classes
+
+### Week 2 — Model Training
+- Trained **YOLOv8n** for 20 epochs (image size 640, batch 16)
+- **Precision: 99.2% · Recall: 100% · mAP@50: 99.5%**
+
+### Week 3 — Export & Real-Time Inference
+- Exported to **ONNX** and compiled **TensorRT FP16 engine** on NVIDIA RTX 3050
+- Built OpenCV video pipeline. Processed 3 videos: 1,494 frames, 460 detections
+
+| Runtime | Device | Latency | FPS | Speedup |
+|---------|--------|---------|-----|---------|
+| PyTorch CPU | CPU | 69.32 ms | 14.43 | 1.0× |
+| ONNX Runtime | CPU | 61.73 ms | 16.20 | 1.12× |
+| **TensorRT FP16** | **RTX 3050** | **6.84 ms** | **146.15** | **10.13×** |
+
+### Week 4 — API, Dashboard, Monitoring & Deployment
+- FastAPI backend: `/health`, `/predict`, `/predict-video`, `/plc/send`, `/metrics`
+- InspectAI Web Dashboard with drag-drop, confidence slider, live bounding boxes, video detection summary
+- Prometheus monitoring, PLC REST simulation, Docker containerization
+- API Benchmark (100 req, concurrency 10): **100% success rate** on all endpoints
+
+| Endpoint | Concurrency 10 RPS | Avg Latency |
+|----------|-------------------|-------------|
+| GET /health | 336.69 | 27.57 ms |
+| POST /plc/send | 301.95 | 31.25 ms |
+| POST /predict | 12.78 | 758.19 ms |
 
 ---
 
@@ -144,16 +200,6 @@ python run_evaluation.py
 
 ---
 
-## 🧪 Running Tests
-
-```bash
-pytest tests/integration -v
-```
-
-All 9 integration tests cover: dashboard rendering, health check, image prediction validation, and smoke imports.
-
----
-
 ## 🐳 Docker Deployment
 
 ### CPU (Standard)
@@ -185,53 +231,49 @@ docker compose -f docker-compose.gpu.yml up -d
 
 ---
 
-## 📊 Model Performance
+## ⚠️ Challenges & Resolutions
 
-| Metric | Value |
-|--------|-------|
-| Model Architecture | YOLOv8n |
-| Dataset | NEU Surface Defect |
-| Classes | 6 |
-| mAP@50 | ~99.5% |
-| Runtime | ONNX Runtime (CPUExecutionProvider) |
-| Inference Size | 640×640 |
-
----
-
-## 📦 Release Artifacts
-
-To package the ONNX model, pinned requirements, and Dockerfile into a release bundle:
-
-**Bash:**
-```bash
-./scripts/package_release.sh
-```
-
-**PowerShell:**
-```powershell
-.\scripts\package_release.ps1
-```
+| Challenge | Resolution |
+|-----------|------------|
+| ONNX model loaded 80 COCO classes instead of 6 defect classes | Re-exported from the correct project `best.pt` weights |
+| OpenCV display error in headless environments | Disabled live window; saved annotated output video files |
+| TensorRT Python bindings not found after `pip install` (Python 3.14 bug) | Manually created `tensorrt/__init__.py` wrapper redirecting to `tensorrt_bindings` |
+| `model.engine` (164 MB) rejected by GitHub (100 MB limit) | Excluded via `git update-index --assume-unchanged`; uploaded via manual workflow artifact |
+| GitHub Actions GPU runner offline | Decoupled TensorRT build to a separate `workflow_dispatch` manual workflow |
+| Video codec `mp4v` not playable in browser | Switched to `avc1` (H.264) codec in `VideoWriter` |
+| Video detection sidebar blank after analysis | Added custom HTTP headers to return per-class detection counts to the frontend |
 
 ---
 
-## 🔁 CI/CD
+## 🔁 CI/CD Pipeline
 
-| Workflow | Trigger | Description |
-|----------|---------|-------------|
-| `ci.yml` | Push/PR to `main` | Python syntax check + smoke test |
-| `integration-and-trt-build.yml` | Push/PR to `main` | Full integration tests (CPU) |
-| `trt-build-manual.yml` | Manual dispatch | TensorRT engine build on self-hosted GPU runner |
+| Workflow | Trigger | Status |
+|----------|---------|--------|
+| CI / checks | Every push to `main` | ✅ Passing |
+| Tests — CPU integration (9 tests) | Every push/PR | ✅ Passing |
+| TensorRT GPU Build | Manual trigger | ✅ Ready |
+
+---
+
+## 🎯 Key Achievements
+
+1. **10.13× GPU speedup** — TensorRT FP16 at 146 FPS far exceeds the 30 FPS industrial line requirement
+2. **99.5% mAP@50** — near-perfect detection accuracy across all 6 defect classes
+3. **100% API stability** — maintained under 10 concurrent clients in benchmarking
+4. **Full-stack delivery** — from raw dataset to trained model → GPU inference → REST API → web UI → CI/CD pipeline
+5. **Browser-compatible video detection** — H.264 encoded annotated videos playable directly in the browser
 
 ---
 
 ## 👥 Team
 
-**Datascience-03** — Multi-member collaborative project
+| Member | Task | Status |
+|--------|------|--------|
+| Rukmani Priya | FastAPI Backend & Video Detection | ✅ Done |
+| Visalam | PLC / External REST Communication | ✅ Done |
+| Aashmika | Prometheus Metrics & Logging | ✅ Done |
+| Manjesh | Dockerization & Container Setup | ✅ Done |
+| **Krishnakumar** | Benchmarking, TensorRT, CI/CD, Integration Tests, Bug Fixes | ✅ Done |
 
-| Branch | Member |
-|--------|--------|
-| `Krishnakumar` | Krishnakumar J |
-| `aashmika` | Aashmika |
-| `manjesh` | Manjesh |
-| `rukmani` | Rukmani |
-| `visalam` | Visalam |
+> [!IMPORTANT]
+> All source code is committed, tested, and pushed. The repository is fully clean and review-ready.
