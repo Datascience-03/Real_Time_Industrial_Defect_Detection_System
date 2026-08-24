@@ -475,8 +475,8 @@ async def predict_video(
         # Create output video writer
         # --------------------------------------------------
 
-        # Use avc1 (H.264) codec so the output video is playable in modern web browsers
-        fourcc = cv2.VideoWriter_fourcc(*"avc1")
+        # Use mp4v (MP4) codec so the output video is playable in modern web browsers
+        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
 
         writer = cv2.VideoWriter(
             str(output_path),
