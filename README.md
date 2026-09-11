@@ -1,4 +1,12 @@
-# InspectAI — Real-Time Industrial Defect Detection System
+> **Note:** This project began as a fork of an internship base template
+> ([Datascience-03/Real_Time_Industrial_Defect_Detection_System](https://github.com/Datascience-03/Real_Time_Industrial_Defect_Detection_System)).
+> Building on that foundation, I implemented the TensorRT/ONNX inference
+> optimization pipeline, benchmarking suite, Docker deployment setup, and
+> real-time inference script — see `build_trt_engine.py`,
+> `realtime_inference.py`, `benchmark_results.txt`, and `Dockerfile`.
+
+---
+ # InspectAI — Real-Time Industrial Defect Detection System
 
 A production-ready AI system for real-time detection of steel surface defects using **YOLOv8 + ONNX Runtime**, served through a **FastAPI backend** with an interactive **InspectAI web dashboard**, Prometheus monitoring, PLC communication, Docker deployment, and TensorRT GPU acceleration.
 
